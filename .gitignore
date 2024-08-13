@@ -2,5 +2,6 @@ logos
 old_folder
 output
 video
+temp
 __pycache__
 **.json

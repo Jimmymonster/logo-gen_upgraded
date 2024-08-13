@@ -29,7 +29,7 @@ def convert_yolo_to_label_studio(yolo_folder, name_mapping, output_file):
     # Process each label file
     for label_file in os.listdir(labels_folder):
         if label_file.endswith('.txt'):
-            old_image_name = os.path.splitext(label_file)[0] + '.png'
+            old_image_name = os.path.splitext(label_file)[0] + '.jpg'
             new_image_name = name_mapping[old_image_name]
             image_path = os.path.join(images_folder, old_image_name)
             label_path = os.path.join(labels_folder, label_file)

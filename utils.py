@@ -128,12 +128,12 @@ def save_yolo_format(frames, bounding_boxes, output_folder, class_names):
     if not os.path.exists(labels_folder):
         os.makedirs(labels_folder)
 
-    classes_file = os.path.join(output_folder, 'class.txt')
+    classes_file = os.path.join(output_folder, 'classes.txt')
     
     # Write class names to class.txt
     with open(classes_file, 'w') as f:
         for i, class_name in enumerate(class_names):
-            f.write(f"{i} {class_name}\n")
+            f.write(f"{class_name}\n")
 
     # Save images and labels
     for i, (frame, bboxes) in enumerate(zip(frames, bounding_boxes)):
