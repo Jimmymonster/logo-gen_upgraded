@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 import random
-import os
 
 class Augmenter:
     def __init__(self, image_dict = None):
@@ -159,6 +158,88 @@ class Augmenter:
             [np.random.uniform(0, max_warp * width), height-1 - np.random.uniform(0, max_warp * height)],
             [width-1 - np.random.uniform(0, max_warp * width), height-1 - np.random.uniform(0, max_warp * height)]
         ])
+        matrix = cv2.getPerspectiveTransform(pts1, pts2)
+        # Apply perspective transform to the image
+        image_np = np.array(image)
+        warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
+        # Convert to grayscale and find non-zero points
+        gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+        non_zero_points = cv2.findNonZero(gray_warped)
+        if non_zero_points is None:
+            return image  # No valid transformation, return original image
+        # Compute the bounding box
+        x_min, y_min = np.min(non_zero_points, axis=0).flatten()
+        x_max, y_max = np.max(non_zero_points, axis=0).flatten()
+        # Ensure coordinates are within bounds
+        x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
+        x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
+        # Crop the warped image to the bounding box
+        cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
+        result_image = Image.fromarray(cropped_warped_image)
+        return result_image
+    
+    def set_perspective(self, image, angle=0, direction=(0,0)):
+        width, height = image.size
+        if(direction[0]<-1 or direction[0]>1 or direction[1]<-1 or direction[1]>1):
+            raise ValueError("[set perspective] : wrong direction input only accept value -1 <= x,y <= 1")
+        if(angle<0 or angle > 80):
+            raise ValueError("[set perspective] : wrong angle input only accept value 0 <= x,y <= 80")
+        pts1 = np.float32([[0,0], [width-1,0], [0,height-1], [width-1,height-1]])
+        
+        wrapx = (width*angle)/180
+        wrapy = (height*angle)/180 
+
+        # Define destination points
+        if(direction==(-1,-1) or direction==(1,1)):
+            pts2 = np.float32([
+                [0, 0],
+                [width-1-wrapx, wrapy],
+                [wrapx, height-1-wrapy],
+                [width-1, height-1]
+            ])
+        elif(direction==(-1,1) or direction==(1,-1)):
+            pts2 = np.float32([
+                [wrapx, wrapy],
+                [width-1, 0],
+                [0, height-1],
+                [width-1-wrapx, height-1-wrapy]
+            ])
+        elif(direction==(-1,0)):
+            pts2 = np.float32([
+                [wrapx, wrapy],
+                [width-1-wrapx, 0],
+                [wrapx, height-1-wrapy],
+                [width-1-wrapx, height-1]
+            ])
+        elif(direction==(1,0)):
+            pts2 = np.float32([
+                [wrapx, 0],
+                [width-1-wrapx, wrapy],
+                [wrapx, height-1],
+                [width-1-wrapx, height-1-wrapy]
+            ])
+        elif(direction==(0,1)):
+            pts2 = np.float32([
+                [wrapx, wrapy],
+                [width-1-wrapx, wrapy],
+                [0, height-1-wrapy],
+                [width-1, height-1-wrapy]
+            ])
+        elif(direction==(0,-1)):
+            pts2 = np.float32([
+                [0, wrapy],
+                [width-1, wrapy],
+                [wrapx, height-1-wrapy],
+                [width-1-wrapx, height-1-wrapy]
+            ])
+        elif(direction==(0,0)):
+            pts2 = np.float32([
+                [0, 0],
+                [width-1, 0],
+                [0, height-1],
+                [width-1, height-1]
+            ])
+        
         matrix = cv2.getPerspectiveTransform(pts1, pts2)
         # Apply perspective transform to the image
         image_np = np.array(image)
