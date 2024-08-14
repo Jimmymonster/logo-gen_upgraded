@@ -25,7 +25,7 @@ for class_name in classes:
     augmenter.add_dict(class_name, images)
 for idx, class_name in enumerate(classes):
     num_class_images = num_images // len(classes)
-    augmented_images.extend(augmenter.augment(class_name, num_class_images))
+    augmented_images.extend(augmenter.augment(class_name, num_class_images, random=config.random_logo))
     class_indices.extend([idx] * num_class_images)
 
 frames = extract_random_frames(video_path, num_frames)

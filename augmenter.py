@@ -64,7 +64,7 @@ class Augmenter:
                 images = augmented_images
         return images
 
-    def augment(self, category, num_images):
+    def augment(self, category, num_images, random=True):
         """Select and augment a number of images from the specified category."""
         if category not in self.image_dict:
             raise ValueError(f"Category '{category}' does not exist in the image dictionary.")
@@ -75,7 +75,15 @@ class Augmenter:
         if num_images <= 0:
             raise ValueError("The number of images to augment must be a positive integer.")
         # Select images evenly, looping over if necessary
-        selected_images = [images[i % len(images)] for i in range(num_images)]
+        if(random == True):
+            selected_images = [images[i % len(images)] for i in range(num_images)]
+        else:
+            repetitions = num_images // len(images)
+            remainder = num_images % len(images)
+            selected_images = []
+            for idx, img in enumerate(images):
+                count = repetitions + (1 if idx < remainder else 0)
+                selected_images.extend([img] * count)
         # Apply augmentations to the selected images
         augmented_images =  self._apply_augmentations(selected_images)
         return augmented_images
@@ -96,6 +104,38 @@ class Augmenter:
         scale = min(max_resolution[0] / original_width, max_resolution[1] / original_height)
         new_width = int(original_width * scale)
         new_height = int(original_height * scale)
+        return image.resize((new_width, new_height), Image.LANCZOS)
+    
+    def set_area(self, image, max_area=40000):
+        original_width, original_height = image.size
+        original_area = original_width * original_height
+        # Determine the scaling factor
+        if original_area > max_area:
+            # If the image is too large, scale down
+            l, r = 0, 1.0
+            while (r - l) > 1e-6:  # Precision threshold
+                mid = (l + r) / 2
+                new_area = (mid * original_width) * (mid * original_height)
+                if new_area <= max_area:
+                    l = mid
+                else:
+                    r = mid
+            scale_factor = l
+        else:
+            # If the image is too small, scale up
+            l, r = 1.0, 10.0  # Upper bound can be adjusted if needed
+            while (r - l) > 1e-6:  # Precision threshold
+                mid = (l + r) / 2
+                new_area = (mid * original_width) * (mid * original_height)
+                if new_area <= max_area:
+                    l = mid
+                else:
+                    r = mid
+            scale_factor = l
+
+        # Compute new dimensions
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
         return image.resize((new_width, new_height), Image.LANCZOS)
 
     def noise(self, image_pil: Image.Image, min_noise_level: float = 25.0, max_noise_level: float = 50.0) -> Image.Image:

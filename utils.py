@@ -145,6 +145,12 @@ def save_yolo_format(frames, bounding_boxes, output_folder, class_names):
         
         image_filename = os.path.join(images_folder, f"frame_{i:04d}.jpg")
         label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+
+        # if image.mode != 'RGBA':
+        #     image = image.convert('RGBA')
+        
+        # image_filename = os.path.join(images_folder, f"frame_{i:04d}.png")
+        # label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
         
         # Save the frame as an image
         image.save(image_filename)
