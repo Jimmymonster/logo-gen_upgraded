@@ -345,7 +345,7 @@ class Augmenter:
         stretched_image = image_pil.resize((new_width, new_height), Image.Resampling.BILINEAR)
         return stretched_image
 
-    def color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0)) -> Image.Image:
+    def hue_color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0)) -> Image.Image:
         if img.mode not in ('RGB', 'RGBA'):
             raise ValueError("Image mode must be RGB or RGBA")
         alpha = None
@@ -379,3 +379,32 @@ class Augmenter:
         if alpha:
             img = Image.merge('RGBA', (img.convert('RGB').split() + (alpha,)))
         return img
+    
+    def rgb_color(self, image, target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255))):
+        if image.mode == 'RGBA':
+            image = image.convert('RGBA')
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Get the image data
+        pixels = image.load()
+        
+        # Extract the color range
+        (r_min, r_max), (g_min, g_max), (b_min, b_max) = target_color_range
+        new_r = random.randint(random_color_range[0][0], random_color_range[0][1])
+        new_g = random.randint(random_color_range[1][0], random_color_range[1][1])
+        new_b = random.randint(random_color_range[2][0], random_color_range[2][1])
+        
+        # Iterate through each pixel
+        for i in range(image.width):
+            for j in range(image.height):
+                r, g, b, *alpha = pixels[i, j]
+                alpha = alpha[0] if alpha else 255  # Extract alpha if available
+                
+                # Check if the pixel is white or nearly white (considering transparency)
+                if r_min<= r <= r_max and g_min<= g <= g_max and b_min<= b <=b_max:
+                    # Generate a random color within the range
+                    # Set the new color, preserving alpha
+                    pixels[i, j] = (new_r, new_g, new_b, alpha) if image.mode == 'RGBA' else (new_r, new_g, new_b)
+        
+        return image
