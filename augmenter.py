@@ -54,6 +54,10 @@ class Augmenter:
                 images = [aug(img, *args, **kwargs) for img in images]
             else:
                 start, end = image_range
+                if(len(images)<start):
+                    continue
+                if(len(images)-1<end):
+                    end = len(images)-1
                 for i in range(start,end+1):
                     images[i] = aug(images[i] , *args, **kwargs)
                 
@@ -319,6 +323,13 @@ class Augmenter:
         original_width, original_height = image_pil.size
         scale_x=1.0
         scale_y=1.0
+        if(min_strech<0):
+            raise ValueError("[stretch] : wrong input min_strech should > 0")
+        if(scale_range[0] > scale_range[1]):
+            raise ValueError("[stretch] : wrong input scale range start should < scale range end")
+        if(1-min_strech<scale_range[0] or 1+min_strech>scale_range[1]):
+            raise ValueError("[stretch] : min stretch should be lower than scale range")
+
         if(random.randint(0, 1) != 0):
             if(random.randint(0, 1) != 0):
                 scale_x = random.uniform(scale_range[0],1-min_strech)

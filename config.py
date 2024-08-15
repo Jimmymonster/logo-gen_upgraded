@@ -22,6 +22,7 @@ occlusions(self, image_pil: Image.Image, occlusion_images: list, num_occlusions:
 blur(self, pil_image, scale_factor)
 stretch(self, image_pil: Image.Image, scale_range= (0.5,1.5), min_strech = 0.0)
 color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0))
+
 """
 augmenter = Augmenter()
 
