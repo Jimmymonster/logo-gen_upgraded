@@ -29,6 +29,6 @@ for idx, class_name in enumerate(classes):
     class_indices.extend([idx] * num_class_images)
 
 frames = extract_random_frames(video_path, num_frames)
-frames_with_augmentations, bounding_boxes = insert_augmented_images(frames, augmented_images, class_indices)
+frames_with_augmentations, bounding_boxes = insert_augmented_images(frames, augmented_images, class_indices,padding_crop=config.padding_crop)
 save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
 

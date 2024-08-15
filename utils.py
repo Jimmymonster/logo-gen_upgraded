@@ -40,7 +40,7 @@ def extract_random_frames(video_path, num_frames):
     video_capture.release()
     return frames
 
-def place_augmented_image(frame, augmented_image):
+def place_augmented_image(frame, augmented_image, padding_crop = False):
     """Randomly place an augmented image on a frame and return the bounding box."""
     frame_height, frame_width, _ = frame.shape
     aug_width, aug_height = augmented_image.size
@@ -69,14 +69,20 @@ def place_augmented_image(frame, augmented_image):
         frame[y:y+aug_height, x:x+aug_width] = augmented_image_np
 
     # Compute bounding box in YOLO format
-    x_center = (x + aug_width / 2) / frame_width
-    y_center = (y + aug_height / 2) / frame_height
-    width = aug_width / frame_width
-    height = aug_height / frame_height
+    if(padding_crop):
+        x_center = (x + aug_width / 2) / frame_width + random.uniform(-3,3)/frame_width
+        y_center = (y + aug_height / 2) / frame_height + random.uniform(-3,3)/frame_height
+        width = aug_width / frame_width + random.uniform(6,10)/frame_width
+        height = aug_height / frame_height + random.uniform(6,10)/frame_height
+    else:
+        x_center = (x + aug_width / 2) / frame_width 
+        y_center = (y + aug_height / 2) / frame_height
+        width = aug_width / frame_width
+        height = aug_height / frame_height
 
     return frame, (x_center, y_center, width, height)
 
-def insert_augmented_images(frames, augmented_images, class_indices):
+def insert_augmented_images(frames, augmented_images, class_indices, padding_crop = False):
     """Randomly place multiple augmented images into frames and return the frames with bounding boxes."""
     num_augmented = len(augmented_images)
     num_frames = len(frames)
@@ -95,7 +101,7 @@ def insert_augmented_images(frames, augmented_images, class_indices):
         frame = frames[frame_index]
         
         # Place the augmented image on the frame
-        frame_with_augmentation, bbox = place_augmented_image(frame, augmented_image)
+        frame_with_augmentation, bbox = place_augmented_image(frame, augmented_image, padding_crop)
         frames[frame_index] = frame_with_augmentation
         
         # Append bounding box information
@@ -140,17 +146,19 @@ def save_yolo_format(frames, bounding_boxes, output_folder, class_names):
         image = Image.fromarray(frame)
         
         # Ensure image is in RGB mode before saving
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        image_filename = os.path.join(images_folder, f"frame_{i:04d}.jpg")
-        label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+        if(i%2==0):
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            image_filename = os.path.join(images_folder, f"frame_{i:04d}.jpg")
+            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
 
-        # if image.mode != 'RGBA':
-        #     image = image.convert('RGBA')
-        
-        # image_filename = os.path.join(images_folder, f"frame_{i:04d}.png")
-        # label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+        else:
+            if image.mode != 'RGBA':
+                image = image.convert('RGBA')
+            
+            image_filename = os.path.join(images_folder, f"frame_{i:04d}.png")
+            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
         
         # Save the frame as an image
         image.save(image_filename)

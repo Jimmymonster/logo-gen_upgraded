@@ -21,34 +21,43 @@ color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0
 augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
-video_path = 'video/video.mp4'
+video_path = 'video/video_TNN.mp4'
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
+padding_crop = True
+
 
 # ress = [75,125,200]
-ress = [75,125,200]
+areas = [3500,15000,35000]
 perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
-perspec_angles = [20]
-rotation_angles = [0,10,20]
-# perspec_angles = [30]
-# rotation_angles = [0,45,90]
-num_images = len(perspec_directions)*len(ress)*len(perspec_angles)*len(rotation_angles)
+perspec_angles = [25]
+rotation_angles = [-30,0,30]
+num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)
+
 num_frames = num_images
-classes = ['mrdiy2']
+classes = ['sevenEleven2']
 i=0
-for res in ress:
+# for res in ress:
+
+for area in areas:
     for rotation_angle in rotation_angles:
         for perspec_angle in perspec_angles:
             for (x,y) in perspec_directions:
                 # augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
-                augmenter.add_augmentation('set_area',max_area=10000,image_range=(i,i))
+                augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
                 augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
                 augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                if(area == areas[0] or i%4==0):
+                    augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+                elif(area == areas[1]):
+                    augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+                elif(area == areas[2]):
+                    augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
                 i+=1
 augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-augmenter.add_augmentation('color',brightness_range = (0.95,1.05), contrast_range = (0.95,1.05))
-augmenter.add_augmentation('blur',scale_factor=random.uniform(1.5,2.5))
+augmenter.add_augmentation('color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+
 
 #============================== Config 3 no random perspective =============================================
 # video_path = 'video/video_TNN.mp4'
