@@ -4,17 +4,22 @@ import random
 """
 Augmenter allow augment method
 
+=== perspective operation ===
 flip_horizontal(self, img)
 flip_vertical(self, img)
-resize(self, image, scale_range=(0.9, 1.5))
-set_resolution(self, image, max_resolution=(80, 80))
-set_area(self, image, max_area=40000)
-noise(self, image_pil: Image.Image, min_noise_level: float = 25.0, max_noise_level: float = 50.0)
-occlusions(self, image_pil: Image.Image, occlusion_images: list, num_occlusions: int = 3)
-blur(self, pil_image, scale_factor)
 perspective(self, image, max_warp=0.2)
 set_perspective(self, image, angle=10, direction=(0,0)):  direction in (x,y) example if want southeast input as (1,-1)
 rotation(self, image, angle_range=(-60, 60))
+
+=== sizing operation ===
+resize(self, image, scale_range=(0.9, 1.5))
+set_resolution(self, image, max_resolution=(80, 80))
+set_area(self, image, max_area=40000)
+
+== distortion operation ===
+noise(self, image_pil: Image.Image, min_noise_level: float = 25.0, max_noise_level: float = 50.0)
+occlusions(self, image_pil: Image.Image, occlusion_images: list, num_occlusions: int = 3)
+blur(self, pil_image, scale_factor)
 stretch(self, image_pil: Image.Image, scale_range= (0.5,1.5), min_strech = 0.0)
 color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0))
 """
@@ -36,7 +41,7 @@ rotation_angles = [-30,0,30]
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)
 
 num_frames = num_images
-classes = ['sevenEleven2']
+classes = ['sevenEleven1']
 i=0
 # for res in ress:
 

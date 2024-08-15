@@ -54,14 +54,17 @@ class Augmenter:
                 images = [aug(img, *args, **kwargs) for img in images]
             else:
                 start, end = image_range
+                for i in range(start,end+1):
+                    images[i] = aug(images[i] , *args, **kwargs)
+                
                 # Apply to a specific range of images
-                augmented_images = []
-                for i, img in enumerate(images):
-                    if start <= i <= end:
-                        augmented_images.append(aug(img, *args, **kwargs))
-                    else:
-                        augmented_images.append(img)
-                images = augmented_images
+                # augmented_images = []
+                # for i, img in enumerate(images):
+                #     if start <= i <= end:
+                #         augmented_images.append(aug(img, *args, **kwargs))
+                #     else:
+                #         augmented_images.append(img)
+                # images = augmented_images
         return images
 
     def augment(self, category, num_images, random=True):
