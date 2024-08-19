@@ -2,7 +2,7 @@ import random
 import cv2
 import os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 def load_images_from_directory(directory_path: str) -> list:
     images = []
@@ -82,7 +82,23 @@ def place_augmented_image(frame, augmented_image, padding_crop = False):
 
     return frame, (x_center, y_center, width, height)
 
-def insert_augmented_images(frames, augmented_images, class_indices, padding_crop = False):
+def whiteout_areas(frame, whiteout_bboxes):
+    """Whiteout specific areas of the frame given bounding boxes."""
+    if isinstance(frame, np.ndarray):
+        frame_pil = Image.fromarray(frame)
+    else:
+        frame_pil = frame
+
+    draw = ImageDraw.Draw(frame_pil)
+    for bbox in whiteout_bboxes:
+        draw.rectangle(bbox, fill="white")
+
+    if isinstance(frame, np.ndarray):
+        return np.array(frame_pil)
+    else:
+        return frame_pil
+
+def insert_augmented_images(frames, augmented_images, class_indices, whiteout_bboxes=[],padding_crop = False):
     """Randomly place multiple augmented images into frames and return the frames with bounding boxes."""
     num_augmented = len(augmented_images)
     num_frames = len(frames)
@@ -99,6 +115,10 @@ def insert_augmented_images(frames, augmented_images, class_indices, padding_cro
     for i, augmented_image in enumerate(augmented_images):
         frame_index = i % num_frames
         frame = frames[frame_index]
+
+        # Whiteout specific areas in the frame
+        if whiteout_bboxes:
+            frame = whiteout_areas(frame, whiteout_bboxes)
         
         # Place the augmented image on the frame
         frame_with_augmentation, bbox = place_augmented_image(frame, augmented_image, padding_crop)

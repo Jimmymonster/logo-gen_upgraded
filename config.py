@@ -27,53 +27,55 @@ rgb_color(self, image, target_color_range=((0, 255), (0, 255), (0, 255)), random
 augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
-# video_path = 'video/video_TNN.mp4'
-# logo_folder = 'logos'
-# output_folder = 'output'
-# random_logo = True
-# padding_crop = True
-
-
-# # ress = [75,125,200]
-# areas = [3500,15000,35000]
-# perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
-# perspec_angles = [25]
-# rotation_angles = [-30,0,30]
-# num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)
-# num_frames = num_images
-# classes = ['TNN']
-# i=0
-# # for res in ress:
-
-# for area in areas:
-#     for rotation_angle in rotation_angles:
-#         for perspec_angle in perspec_angles:
-#             for (x,y) in perspec_directions:
-#                 # augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
-#                 augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-#                 augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-#                 augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-#                 if(area == areas[0] or i%4==0):
-#                     augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-#                 elif(area == areas[1]):
-#                     augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-#                 elif(area == areas[2]):
-#                     augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
-#                 i+=1
-# augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-# augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
-
-# ================================== TNN ================================================================
-video_path = 'video/video.mp4'
+video_path = 'video/video_TNN.mp4'
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
 padding_crop = True
-num_images=50
+whiteout_bboxes = [(620,90,668,175)]
+
+
+# ress = [75,125,200]
+areas = [3500,15000,35000]
+perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
+perspec_angles = [25]
+rotation_angles = [-30,0,30]
+num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)
 num_frames = num_images
-classes = ['TNN']
-augmenter.add_augmentation('hue_color', hue_range = (-0.9,0.9), image_range=(1,24))
-augmenter.add_augmentation('rgb_color', target_color_range=((80, 255), (80, 255), (80, 255)), image_range=(25,49))
+classes = ['sevenEleven1']
+i=0
+# for res in ress:
+
+for area in areas:
+    for rotation_angle in rotation_angles:
+        for perspec_angle in perspec_angles:
+            for (x,y) in perspec_directions:
+                # augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
+                augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+                augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+                augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                if(area == areas[0] or i%4==0):
+                    augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+                elif(area == areas[1]):
+                    augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+                elif(area == areas[2]):
+                    augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
+                i+=1
+augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
+augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+
+# ================================== TNN ================================================================
+# video_path = 'video/video.mp4'
+# logo_folder = 'logos'
+# output_folder = 'output'
+# random_logo = True
+# padding_crop = True
+# whiteout_bboxes = [(50, 50, 150, 150)]
+# num_images=30
+# num_frames = num_images
+# classes = ['TNN']
+# augmenter.add_augmentation('hue_color', hue_range = (-0.9,0.9), image_range=(0,14))
+# augmenter.add_augmentation('rgb_color', target_color_range=((80, 255), (80, 255), (80, 255)), image_range=(15,29))
 
 #============================== Config 3 no random perspective =============================================
 # video_path = 'video/video_TNN.mp4'
