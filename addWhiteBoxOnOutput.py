@@ -1,10 +1,26 @@
 import os
-from PIL import Image
-from utils import whiteout_areas
+from PIL import Image, ImageDraw
+import numpy as np
 
 output_path = "C:/Users/thanapob/Downloads/khontonsurmong"
 image_path = os.path.join(output_path, "images")
 whiteout_bboxes = [(620, 90, 668, 175)]
+
+def whiteout_areas(frame, whiteout_bboxes):
+    """Whiteout specific areas of the frame given bounding boxes."""
+    if isinstance(frame, np.ndarray):
+        frame_pil = Image.fromarray(frame)
+    else:
+        frame_pil = frame
+
+    draw = ImageDraw.Draw(frame_pil)
+    for bbox in whiteout_bboxes:
+        draw.rectangle(bbox, fill="white")
+
+    if isinstance(frame, np.ndarray):
+        return np.array(frame_pil)
+    else:
+        return frame_pil
 
 def load_images_from_directory(directory_path):
     images = {}
