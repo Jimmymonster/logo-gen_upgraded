@@ -23,6 +23,7 @@ def convert_yolo_to_label_studio(yolo_folder, name_mapping, output_file):
     classes_file = os.path.join(yolo_folder, 'classes.txt')
     with open(classes_file, 'r') as f:
         classes = [line.strip() for line in f.readlines()]
+    # print(classes)
     
     combined_data = []
 
