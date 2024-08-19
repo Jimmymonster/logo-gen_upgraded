@@ -88,6 +88,7 @@ def convert_yolo_to_label_studio(yolo_folder, name_mapping, output_file):
 
 # Usage
 yolo_folder = 'output'
+# yolo_folder = "C:/Users/thanapob/Downloads/khontonsurmong"
 label_studio_json_file = 'test.json'
 output_file = 'combined_annotations.json'
 
