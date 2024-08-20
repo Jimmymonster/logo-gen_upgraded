@@ -32,7 +32,8 @@ logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
 padding_crop = True
-whiteout_bboxes = [(620,90,668,175)]
+# whiteout_bboxes = [(620,90,668,175)]
+whiteout_bboxes = []
 
 
 # ress = [75,125,200]
