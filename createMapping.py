@@ -6,6 +6,7 @@ from utils import load_env_file
 # ===================== config zone ===================================
 # api con fig
 useApi = True
+
 env_vars = load_env_file('.env')
 label_studio_ip = env_vars['LABEL_STUDIO_IP']
 api_key = env_vars['API_KEY'] 

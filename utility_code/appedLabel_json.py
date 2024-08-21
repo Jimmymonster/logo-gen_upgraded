@@ -12,7 +12,7 @@ def load_env_file(filepath):
                 env_vars[key.strip()] = value.strip()
     return env_vars
 
-label_studio_project_id = 218
+label_studio_project_id = 213
 
 output_json_path = "append_annotation.json"
 class_name = "TNN"
@@ -36,6 +36,7 @@ response = requests.get(api_call, headers=headers)
 response.raise_for_status()  # Check if the request was successful
 data = response.json()
 
+fields_to_remove=['id','was_cancelled','created_at','updated_at','draft_created_at','lead_time','prediction','result_count','unique_id','import_id','last_action','task','project','updated_by','parent_prediction','parent_annotation','last_created_by','file_upload','drafts','predictions','meta','inner_id','total_annotations','cancelled_annotations','total_predictions','comment_count','unresolved_comment_count','last_comment_updated_at','project','updated_by','comment_authors','completed_by']
 # Add bounding box to each annotation
 for task in data:
     if isinstance(task.get('annotations'), list):
@@ -55,6 +56,10 @@ for task in data:
                 "to_name": "image",
                 "origin": "manual",
             })
+            for field in fields_to_remove:
+                annotation.pop(field, None)  # Remove field if it exists, ignore if not
+    for field in fields_to_remove:
+        task.pop(field, None)  # Remove field if it exists, ignore if not
 
 # Save updated JSON data to a file
 with open(output_json_path, 'w') as outfile:
