@@ -5,3 +5,4 @@ video
 temp
 __pycache__
 **.json
+.env

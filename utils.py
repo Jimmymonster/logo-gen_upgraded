@@ -4,6 +4,16 @@ import os
 import numpy as np
 from PIL import Image, ImageDraw
 
+def load_env_file(filepath):
+    env_vars = {}
+    with open(filepath, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                env_vars[key.strip()] = value.strip()
+    return env_vars
+
 def load_images_from_directory(directory_path: str) -> list:
     images = []
     for filename in os.listdir(directory_path):

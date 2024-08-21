@@ -1,17 +1,65 @@
 import os
 import json
+import requests
+from utils import load_env_file
+
+# ===================== config zone ===================================
+# api con fig
+useApi = True
+env_vars = load_env_file('.env')
+label_studio_ip = env_vars['LABEL_STUDIO_IP']
+api_key = env_vars['API_KEY'] 
+
+#yolo folder with label for mapping
+yolo_folder = "C:/Users/thanapob/Downloads/khontonsurmong"
+
+# use api call config
+label_studio_project_id = 100
+
+# manual download json path config
+json_path = 'test.json'
+
+# ======================================================================
+
+if useApi is True:
+    api_call = f"http://{label_studio_ip}/api/projects/{label_studio_project_id}/export?exportType=JSON&download_all_tasks=true"
+    headers = {
+        "Authorization": f"Token {api_key}"
+    }
+    response = requests.get(api_call, headers=headers)
+    response.raise_for_status()  # Check if the request was successful
+    label_studio_json_file = response.json()
+else: 
+    
+    with open(json_path, 'r') as f:
+        label_studio_json_file = json.load(f)
+
+output_file = 'combined_annotations.json'
+
+# def extract_name_mapping_from_label_studio(json_file):
+#     name_mapping = {}
+#     first = True
+#     with open(json_file, 'r') as f:
+#         data = json.load(f)
+#         for item in data:
+#             old_name = '.'.join(item['data']['image'].split('/')[-1].split('-',1)[1].split('.')[:-1])
+#             new_name = item['file_upload']
+#             name_mapping[old_name] = new_name
+#             if first:
+#                 project_num = item['data']['image'].split('/')[-2]
+#     # print(name_mapping)
+#     return name_mapping,project_num
 
 def extract_name_mapping_from_label_studio(json_file):
     name_mapping = {}
     first = True
-    with open(json_file, 'r') as f:
-        data = json.load(f)
-        for item in data:
-            old_name = '.'.join(item['data']['image'].split('/')[-1].split('-',1)[1].split('.')[:-1])
-            new_name = item['file_upload']
-            name_mapping[old_name] = new_name
-            if first:
-                project_num = item['data']['image'].split('/')[-2]
+    data = json_file
+    for item in data:
+        old_name = '.'.join(item['data']['image'].split('/')[-1].split('-',1)[1].split('.')[:-1])
+        new_name = item['file_upload']
+        name_mapping[old_name] = new_name
+        if first:
+            project_num = item['data']['image'].split('/')[-2]
     # print(name_mapping)
     return name_mapping,project_num
 
@@ -87,11 +135,7 @@ def convert_yolo_to_label_studio(yolo_folder, name_mapping, output_file):
     with open(output_file, 'w') as f:
         json.dump(combined_data, f, indent=4)
 
-# Usage
-yolo_folder = 'output'
-# yolo_folder = "C:/Users/thanapob/Downloads/khontonsurmong"
-label_studio_json_file = 'test.json'
-output_file = 'combined_annotations.json'
+
 
 # Extract name mapping from Label Studio JSON
 name_mapping , project_num = extract_name_mapping_from_label_studio(label_studio_json_file)
