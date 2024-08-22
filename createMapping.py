@@ -12,10 +12,10 @@ label_studio_ip = env_vars['LABEL_STUDIO_IP']
 api_key = env_vars['API_KEY'] 
 
 #yolo folder with label for mapping
-yolo_folder = "C:/Users/thanapob/Downloads/khontonsurmong"
+yolo_folder = "output"
 
 # use api call config
-label_studio_project_id = 100
+label_studio_project_id = 229
 
 # manual download json path config
 json_path = 'test.json'

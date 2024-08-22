@@ -1,5 +1,5 @@
 from augmenter import Augmenter
-from utils import load_images_from_directory, extract_random_frames, insert_augmented_images, save_yolo_format
+from utils import load_images_from_directory, extract_random_frames, insert_augmented_images, save_yolo_format, ranbow_frames
 import os,shutil
 import config
 
@@ -28,7 +28,11 @@ for idx, class_name in enumerate(classes):
     augmented_images.extend(augmenter.augment(class_name, num_class_images, random=config.random_logo))
     class_indices.extend([idx] * num_class_images)
 
-frames = extract_random_frames(video_path, num_frames)
+if config.video_path == 'rainbow':
+    frames = ranbow_frames(num_frames)
+else:
+    frames = extract_random_frames(video_path, num_frames)
+
 frames_with_augmentations, bounding_boxes = insert_augmented_images(frames, augmented_images, class_indices,whiteout_bboxes=config.whiteout_bboxes,padding_crop=config.padding_crop)
 save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
 
