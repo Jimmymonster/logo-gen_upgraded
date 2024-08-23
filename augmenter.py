@@ -8,6 +8,26 @@ class Augmenter:
         self.image_dict = image_dict if image_dict is not None else {}   # images should be a list of PIL Image objects
         self.augmentations = []  # List to store the sequence of augmentations
 
+    #=========================== utility function =====================================
+    def pil_to_cv(self, pil_image):
+        cv_image = np.array(pil_image)
+    
+        # Check if the image has an alpha channel (RGBA)
+        if cv_image.shape[2] == 4:  # RGBA
+            cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGBA2BGRA)
+        else:  # RGB
+            cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+    
+        return cv_image
+
+    def cv_to_pil(self, cv_image):
+        if cv_image.shape[2] == 4:  # BGRA
+            pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGRA2RGBA))
+        else:  # BGR
+            pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB))
+        return pil_image
+    #===================================================================================
+
     def add_dict(self, category, images):
         """Add or update a category with a list of PIL images."""
         if not isinstance(images, list) or not all(isinstance(img, Image.Image) for img in images):
@@ -306,6 +326,37 @@ class Augmenter:
         cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
         result_image = Image.fromarray(cropped_warped_image)
         return result_image
+    
+    def cylindrical(self, pil_image, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
+        # Convert PIL to OpenCV image
+        img = self.pil_to_cv(pil_image)
+        height, width = img.shape[:2]
+        # Calculate focal lengths as a percentage of image dimensions
+        focal_len_x = (focal_len_x / 100.0) * width
+        focal_len_y = (focal_len_y / 100.0) * height
+        # Define the intrinsic camera matrix with dynamic focal lengths
+        K = np.array([[focal_len_x, 0, width / 2],
+                    [0, focal_len_y, height / 2],
+                    [0, 0, 1]])
+        # Pixel coordinates
+        y_i, x_i = np.indices((height, width))
+        X = np.stack([x_i, y_i, np.ones_like(x_i)], axis=-1).reshape(height * width, 3)  # to homog
+        Kinv = np.linalg.inv(K)
+        X = Kinv.dot(X.T).T  # normalized coords
+        # Calculate cylindrical coords (sin(theta), h, cos(theta))
+        A = np.stack([np.sin(X[:, 0]), X[:, 1], np.cos(X[:, 0])], axis=-1).reshape(height * width, 3)
+        B = K.dot(A.T).T  # project back to image-pixels plane
+        # Back from homog coords
+        B = B[:, :-1] / B[:, [-1]]
+        # Ensure warp coords only within image bounds
+        B[(B[:, 0] < 0) | (B[:, 0] >= width) | (B[:, 1] < 0) | (B[:, 1] >= height)] = -1
+        B = B.reshape(height, width, -1)
+        # Convert image to RGBA
+        img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA) if img.shape[2] == 3 else img
+        # Warp the image according to cylindrical coords
+        warped_img = cv2.remap(img_rgba, B[:, :, 0].astype(np.float32), B[:, :, 1].astype(np.float32), interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+        # Convert back to PIL image
+        return self.cv_to_pil(warped_img)
 
     def rotation(self, image, angle_range=(-60, 60)):
         angle = np.random.uniform(angle_range[0], angle_range[1])

@@ -5,29 +5,30 @@ import random
 Augmenter allow augment method
 
 === perspective operation ===
-flip_horizontal(self, img)
-flip_vertical(self, img)
-perspective(self, image, max_warp=0.2)
-set_perspective(self, image, angle=10, direction=(0,0)):  direction in (x,y) example if want southeast input as (1,-1)
-rotation(self, image, angle_range=(-60, 60))
+flip_horizontal()
+flip_vertical()
+perspective(max_warp=0.2)
+set_perspective(angle=10, direction=(0,0)):  direction in (x,y) example if want southeast input as (1,-1)
+cylindrical(focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0) <--! Note that cylindrical shape shoundn't use with perspective function, perspective function only work for 2d image.
+rotation(angle_range=(-60, 60))
 
 === sizing operation ===
-resize(self, image, scale_range=(0.9, 1.5))
-set_resolution(self, image, max_resolution=(80, 80))
-set_area(self, image, max_area=40000)
+resize(scale_range=(0.9, 1.5))
+set_resolution(max_resolution=(80, 80))
+set_area(max_area=40000)
 
 == distortion operation ===
-noise(self, image_pil: Image.Image, min_noise_level: float = 25.0, max_noise_level: float = 50.0)
-occlusions(self, image_pil: Image.Image, occlusion_images: list, num_occlusions: int = 3)
-blur(self, pil_image, scale_factor)
-stretch(self, image_pil: Image.Image, scale_range= (0.5,1.5), min_strech = 0.0)
-hue_color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0))
-rgb_color(self, image, target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255)))
+noise(min_noise_level: float = 25.0, max_noise_level: float = 50.0)
+occlusions( occlusion_images: list, num_occlusions: int = 3)
+blur(scale_factor)
+stretch(scale_range= (0.5,1.5), min_strech = 0.0)
+hue_color(brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0))
+rgb_color(target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255)))
 """
 augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
-video_path = 'video/video_TNN.mp4'
+video_path = 'video/video.mp4'
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
@@ -36,32 +37,39 @@ padding_crop = True
 whiteout_bboxes = []
 
 
-# ress = [75,125,200]
 areas = [3500,15000,35000]
+# areas = [3500,15000]
 perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
 perspec_angles = [25]
 rotation_angles = [-30,0,30]
-num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)
-num_frames = num_images
-classes = ['sevenEleven1']
-i=0
-# for res in ress:
 
-for area in areas:
-    for rotation_angle in rotation_angles:
-        for perspec_angle in perspec_angles:
-            for (x,y) in perspec_directions:
-                # augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
-                augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-                augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-                augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                if(area == areas[0] or i%4==0):
-                    augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-                elif(area == areas[1]):
-                    augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-                elif(area == areas[2]):
-                    augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
-                i+=1
+classes = ['pepsi2']
+num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)
+
+# num_images = 10
+
+num_frames = num_images
+
+i=0
+# augmenter.add_augmentation('set_area',max_area=30000)
+# augmenter.add_augmentation('cylindrical',focal_len_x=90, focal_len_y=90, rotation_angle = 0, perspective_angle= 0,image_range=(0,4))
+
+for _ in range(len(classes)):
+    for area in areas:
+        for rotation_angle in rotation_angles:
+            for perspec_angle in perspec_angles:
+                for (x,y) in perspec_directions:
+                    augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+                    augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+                    augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                    if(area == areas[0] or i%4==0):
+                        augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+                    elif(area == areas[1]):
+                        augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+                    elif(area == areas[2]):
+                        augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
+                    i+=1
+
 augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
 augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
 
