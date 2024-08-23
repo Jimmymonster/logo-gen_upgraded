@@ -19,3 +19,7 @@ def gen_rainbow(width = 704, height = 576):
     np_image = np.array(image)
 
     return np_image
+
+def gen_plain_rgb(width = 704 ,height = 704, rgb =(255,255,255)):
+    np_image = np.full((height, width, 3), rgb, dtype=np.uint8)
+    return np_image

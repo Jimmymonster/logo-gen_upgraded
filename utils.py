@@ -3,7 +3,7 @@ import cv2
 import os
 import numpy as np
 from PIL import Image, ImageDraw
-from utility_code.gen_rainbow import gen_rainbow
+from utility_code.gen_bg import gen_rainbow,gen_plain_rgb
 
 def load_env_file(filepath):
     env_vars = {}
@@ -58,6 +58,12 @@ def ranbow_frames(num_frames):
         frames.append(image)
     return frames
 
+def rgb_frames(num_frames,rgb=(255,255,255)):
+    frames = [] 
+    for i in range(num_frames):
+        image=gen_plain_rgb(width=704,height=576,rgb=rgb)
+        frames.append(image)
+    return frames
 
 def place_augmented_image(frame, augmented_image, padding_crop = False):
     """Randomly place an augmented image on a frame and return the bounding box."""

@@ -28,7 +28,8 @@ rgb_color(target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=
 augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
-video_path = 'video/video.mp4'
+# video_path = 'video/video.mp4'
+video_path = 'white' # white, rainbow
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
@@ -43,11 +44,10 @@ perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
 perspec_angles = [25]
 rotation_angles = [-30,0,30]
 
-classes = ['pepsi2']
+classes = ['aia1','aia2','amazon','sss','mrdiy1','mrdiy2']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)
 
 # num_images = 10
-
 num_frames = num_images
 
 i=0
