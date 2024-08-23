@@ -28,50 +28,61 @@ rgb_color(target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=
 augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
+
 # video_path = 'video/video.mp4'
-video_path = 'white' # white, rainbow
+# # video_path = 'white' # white, black, rainbow
+# logo_folder = 'logos'
+# output_folder = 'output'
+# random_logo = True
+# padding_crop = True
+# # whiteout_bboxes = [(620,90,668,175)]
+# whiteout_bboxes = []
+
+# areas = [3500,15000,35000]
+# perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
+# perspec_angles = [25]
+# rotation_angles = [-30,0,30]
+
+# classes = ['aia1','aia2','amazon','sss','mrdiy1','mrdiy2']
+# num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)
+# num_frames = num_images
+# i=0
+# for _ in range(len(classes)):
+#     for area in areas:
+#         for rotation_angle in rotation_angles:
+#             for perspec_angle in perspec_angles:
+#                 for (x,y) in perspec_directions:
+#                     augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+#                     augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+#                     augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+#                     if(area == areas[0] or i%4==0):
+#                         augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+#                     elif(area == areas[1]):
+#                         augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+#                     elif(area == areas[2]):
+#                         augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
+#                     i+=1
+
+# augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
+# augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+
+# ===================================== Test Config =====================================================
+
+# video_path = 'video/video.mp4'
+video_path = 'black' # black, white, rainbow
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
 padding_crop = True
 # whiteout_bboxes = [(620,90,668,175)]
 whiteout_bboxes = []
-
-
-areas = [3500,15000,35000]
-# areas = [3500,15000]
-perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
-perspec_angles = [25]
-rotation_angles = [-30,0,30]
-
-classes = ['aia1','aia2','amazon','sss','mrdiy1','mrdiy2']
-num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)
-
-# num_images = 10
-num_frames = num_images
-
-i=0
-# augmenter.add_augmentation('set_area',max_area=30000)
-# augmenter.add_augmentation('cylindrical',focal_len_x=90, focal_len_y=90, rotation_angle = 0, perspective_angle= 0,image_range=(0,4))
-
-for _ in range(len(classes)):
-    for area in areas:
-        for rotation_angle in rotation_angles:
-            for perspec_angle in perspec_angles:
-                for (x,y) in perspec_directions:
-                    augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-                    augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-                    augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                    if(area == areas[0] or i%4==0):
-                        augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-                    elif(area == areas[1]):
-                        augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-                    elif(area == areas[2]):
-                        augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
-                    i+=1
-
-augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+# classes = ['pepsi2']
+classes = ['sevenEleven1']
+num_images = 10
+num_frames = num_images//2
+augmenter.add_augmentation('set_area',max_area=30000)
+# augmenter.add_augmentation('set_perspective',angle=60,direction=(0,-1),image_range=(0,4))
+augmenter.add_augmentation('cylindrical',focal_len_x=80, focal_len_y=80, rotation_angle = 0, perspective_angle= 10,image_range=(0,4))
 
 # ================================== TNN ================================================================
 # video_path = 'video/video.mp4'

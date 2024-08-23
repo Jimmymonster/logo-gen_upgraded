@@ -32,6 +32,8 @@ if config.video_path == 'rainbow':
     frames = ranbow_frames(num_frames)
 elif config.video_path == 'white':
     frames = rgb_frames(num_frames,rgb=(255,255,255))
+elif config.video_path == 'black':
+    frames = rgb_frames(num_frames,rgb=(0,0,0))
 else:
     frames = extract_random_frames(video_path, num_frames)
 

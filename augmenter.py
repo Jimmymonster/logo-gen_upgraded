@@ -26,6 +26,21 @@ class Augmenter:
         else:  # BGR
             pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB))
         return pil_image
+    
+    def cut_image_width(self, image: Image.Image, percentage: float, side: str = 'right') -> Image.Image:
+        if not 0 < percentage < 1:
+            raise ValueError("Percentage must be between 0 and 1 (exclusive).")
+        width, height = image.size
+        cut_width = int(width * percentage)
+        if side == 'left':
+            # Cut from the left
+            cropped_image = image.crop((cut_width, 0, width, height))
+        elif side == 'right':
+            # Cut from the right
+            cropped_image = image.crop((0, 0, width - cut_width, height))
+        else:
+            raise ValueError("Side must be 'left' or 'right'.")
+        return cropped_image
     #===================================================================================
 
     def add_dict(self, category, images):
@@ -327,17 +342,33 @@ class Augmenter:
         result_image = Image.fromarray(cropped_warped_image)
         return result_image
     
-    def cylindrical(self, pil_image, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
+    def cylindrical(self, img, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
+        width, height = img.size
+        centerX, centerY = width/2,height/2
+        
+        # cut image if rotate the cylinder shape
+        if(rotation_angle!=0):
+            rotation_angle%=360
+            side = "right"
+            if(rotation_angle>180):
+                rotation_angle = 360-rotation_angle
+                side = "left"
+                centerX += width * (rotation_angle / 180)
+            else:
+                centerX -= width * (rotation_angle / 180)
+            percentage = rotation_angle/180
+            img = self.cut_image_width(img, percentage, side)
+
         # Convert PIL to OpenCV image
-        img = self.pil_to_cv(pil_image)
-        height, width = img.shape[:2]
+        img = self.pil_to_cv(img)
+        # height, width = img.shape[:2]
         # Calculate focal lengths as a percentage of image dimensions
         focal_len_x = (focal_len_x / 100.0) * width
         focal_len_y = (focal_len_y / 100.0) * height
         # Define the intrinsic camera matrix with dynamic focal lengths
-        K = np.array([[focal_len_x, 0, width / 2],
-                    [0, focal_len_y, height / 2],
-                    [0, 0, 1]])
+        K = np.array([[focal_len_x, 0, centerX],
+                [0, focal_len_y, centerY],
+                [0, 0, 1]])
         # Pixel coordinates
         y_i, x_i = np.indices((height, width))
         X = np.stack([x_i, y_i, np.ones_like(x_i)], axis=-1).reshape(height * width, 3)  # to homog
