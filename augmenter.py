@@ -41,6 +41,63 @@ class Augmenter:
         else:
             raise ValueError("Side must be 'left' or 'right'.")
         return cropped_image
+    
+    def trim_image(self, image: Image.Image, direction: str, pixels: int) -> Image.Image:
+        width, height = image.size
+        
+        if direction == 'top':
+            trimmed_image = image.crop((0, pixels, width, height))
+        elif direction == 'bottom':
+            trimmed_image = image.crop((0, 0, width, height - pixels))
+        elif direction == 'left':
+            trimmed_image = image.crop((pixels, 0, width, height))
+        elif direction == 'right':
+            trimmed_image = image.crop((0, 0, width - pixels, height))
+        else:
+            raise ValueError("Direction must be 'top', 'bottom', 'left', or 'right'.")
+        
+        return trimmed_image
+    
+    def curve_image_y_axis(self, image: Image.Image, direction: str = 'down', curvature: float = 0.5) -> Image.Image:
+        # Convert image to numpy array
+        img_array = np.array(image)
+        height, width = img_array.shape[:2]
+
+        # Set direction multiplier
+        direction_multiplier = 1 if direction == 'up' else -1
+
+        # Calculate the middle of the image (x=0 in parabolic function)
+        x_mid = width // 2
+
+        # Determine the maximum shift to pad the image
+        max_shift = int(curvature * (x_mid ** 2))
+
+        # Create a new image with padded height to accommodate maximum shift
+        padded_height = height + 2 * max_shift
+        new_img_array = np.zeros((padded_height, width, 4), dtype=np.uint8)
+
+        # Iterate over each column (x-coordinate) in the image
+        for x in range(width):
+            # Calculate the parabolic shift for this x-coordinate
+            x_offset = x - x_mid
+            y_shift = int(curvature * (x_offset ** 2) * direction_multiplier)
+
+            # Apply the same y_shift to all pixels in this column
+            for y in range(height):
+                new_y = y + y_shift + max_shift
+
+                # If new position is within bounds, place the pixel in the new image array
+                if 0 <= new_y < padded_height:
+                    new_img_array[new_y, x] = img_array[y, x]
+
+        # Convert back to PIL image
+        new_image = Image.fromarray(new_img_array, mode='RGBA')
+        if(direction == 'up'):
+            new_image = self.trim_image(new_image,'top',max_shift)
+        elif(direction == 'down'):
+            new_image = self.trim_image(new_image,'bottom',max_shift)
+
+        return new_image
     #===================================================================================
 
     def add_dict(self, category, images):
@@ -387,7 +444,16 @@ class Augmenter:
         # Warp the image according to cylindrical coords
         warped_img = cv2.remap(img_rgba, B[:, :, 0].astype(np.float32), B[:, :, 1].astype(np.float32), interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
         # Convert back to PIL image
-        return self.cv_to_pil(warped_img)
+        img = self.cv_to_pil(warped_img)
+        if(perspective_angle!=0):
+            if(perspective_angle<0):
+                perspective_angle= - perspective_angle
+                perspective_angle%=360
+                img = self.curve_image_y_axis(img, 'up', curvature=perspective_angle/7200)
+            else:
+                perspective_angle%=360
+                img = self.curve_image_y_axis(img, 'down', curvature=perspective_angle/7200)
+        return img
 
     def rotation(self, image, angle_range=(-60, 60)):
         angle = np.random.uniform(angle_range[0], angle_range[1])
