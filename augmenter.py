@@ -490,3 +490,28 @@ class Augmenter:
                     pixels[i, j] = (new_r, new_g, new_b, alpha) if image.mode == 'RGBA' else (new_r, new_g, new_b)
         
         return image
+    
+    def adjust_opacity(self, pil_image: Image.Image, opacity: float) -> Image.Image:
+        if pil_image.mode != 'RGBA':
+            raise ValueError("Image must have 'RGBA' mode to adjust opacity.")
+        # Convert image to 'RGBA' if it's not already
+        pil_image = pil_image.convert('RGBA')
+        # Split the image into its component bands
+        r, g, b, a = pil_image.split()
+        # Create an 'A' band with the new opacity level
+        alpha = a.point(lambda p: int(p * opacity))
+        # Merge the bands back together
+        pil_image = Image.merge('RGBA', (r, g, b, alpha))
+        return pil_image
+    
+    def adjust_background_opacity(self, pil_image: Image.Image, rgb_color: tuple, background_opacity: float) -> Image.Image:
+        if pil_image.mode != 'RGBA':
+            pil_image = pil_image.convert('RGBA')
+        # Split the image into its component bands
+        r, g, b, a = pil_image.split()
+        # Create a new image filled with the specified RGB color and the desired background opacity
+        background = Image.new('RGBA', pil_image.size, (*rgb_color, int(255 * background_opacity)))
+        # Composite the background and the original image
+        result_image = Image.alpha_composite(background, pil_image)
+
+        return result_image
