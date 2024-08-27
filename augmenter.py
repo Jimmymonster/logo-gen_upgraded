@@ -445,6 +445,7 @@ class Augmenter:
         warped_img = cv2.remap(img_rgba, B[:, :, 0].astype(np.float32), B[:, :, 1].astype(np.float32), interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
         # Convert back to PIL image
         img = self.cv_to_pil(warped_img)
+
         if(perspective_angle!=0):
             if(perspective_angle<0):
                 perspective_angle= - perspective_angle
@@ -458,6 +459,8 @@ class Augmenter:
                 angle = 360 - perspective_angle
             else:
                 angle = perspective_angle
+
+            width, height = img.size
             wrapx = (width*angle)/180
             wrapy = (height*angle)/180 
             pts1 = np.float32([[0,0], [width-1,0], [0,height-1], [width-1,height-1]])
