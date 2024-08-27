@@ -15,7 +15,7 @@ api_key = env_vars['API_KEY']
 yolo_folder = "output"
 
 # use api call config
-label_studio_project_id = 239
+label_studio_project_id = 241
 
 # manual download json path config
 json_path = 'test.json'

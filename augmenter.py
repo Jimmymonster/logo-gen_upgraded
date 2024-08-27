@@ -11,7 +11,6 @@ class Augmenter:
     #=========================== utility function =====================================
     def pil_to_cv(self, pil_image):
         cv_image = np.array(pil_image)
-    
         # Check if the image has an alpha channel (RGBA)
         if cv_image.shape[2] == 4:  # RGBA
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGBA2BGRA)
@@ -44,7 +43,6 @@ class Augmenter:
     
     def trim_image(self, image: Image.Image, direction: str, pixels: int) -> Image.Image:
         width, height = image.size
-        
         if direction == 'top':
             trimmed_image = image.crop((0, pixels, width, height))
         elif direction == 'bottom':
@@ -55,49 +53,57 @@ class Augmenter:
             trimmed_image = image.crop((0, 0, width - pixels, height))
         else:
             raise ValueError("Direction must be 'top', 'bottom', 'left', or 'right'.")
-        
         return trimmed_image
     
     def curve_image_y_axis(self, image: Image.Image, direction: str = 'down', curvature: float = 0.5) -> Image.Image:
         # Convert image to numpy array
         img_array = np.array(image)
         height, width = img_array.shape[:2]
-
         # Set direction multiplier
         direction_multiplier = 1 if direction == 'up' else -1
-
         # Calculate the middle of the image (x=0 in parabolic function)
         x_mid = width // 2
-
         # Determine the maximum shift to pad the image
         max_shift = int(curvature * (x_mid ** 2))
-
         # Create a new image with padded height to accommodate maximum shift
         padded_height = height + 2 * max_shift
         new_img_array = np.zeros((padded_height, width, 4), dtype=np.uint8)
-
         # Iterate over each column (x-coordinate) in the image
         for x in range(width):
             # Calculate the parabolic shift for this x-coordinate
             x_offset = x - x_mid
             y_shift = int(curvature * (x_offset ** 2) * direction_multiplier)
-
             # Apply the same y_shift to all pixels in this column
             for y in range(height):
                 new_y = y + y_shift + max_shift
-
                 # If new position is within bounds, place the pixel in the new image array
                 if 0 <= new_y < padded_height:
                     new_img_array[new_y, x] = img_array[y, x]
-
         # Convert back to PIL image
         new_image = Image.fromarray(new_img_array, mode='RGBA')
         if(direction == 'up'):
             new_image = self.trim_image(new_image,'top',max_shift)
         elif(direction == 'down'):
             new_image = self.trim_image(new_image,'bottom',max_shift)
-
         return new_image
+    def recalculate_width_height(self,image):
+        width, height = image.size
+        image = np.array(image)
+         # Convert to grayscale and find non-zero points
+        gray_warped = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        non_zero_points = cv2.findNonZero(gray_warped)
+        if non_zero_points is None:
+            return img  # No valid transformation, return original image
+        # Compute the bounding box
+        x_min, y_min = np.min(non_zero_points, axis=0).flatten()
+        x_max, y_max = np.max(non_zero_points, axis=0).flatten()
+        # Ensure coordinates are within bounds
+        x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
+        x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
+        # Crop the warped image to the bounding box
+        cropped_warped_image = image[y_min:y_max+1, x_min:x_max+1]
+        img = Image.fromarray(cropped_warped_image)
+        return img
     #===================================================================================
 
     def add_dict(self, category, images):
@@ -475,19 +481,21 @@ class Augmenter:
             image_np = np.array(img)
             warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
             # Convert to grayscale and find non-zero points
-            gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
-            non_zero_points = cv2.findNonZero(gray_warped)
-            if non_zero_points is None:
-                return img  # No valid transformation, return original image
-            # Compute the bounding box
-            x_min, y_min = np.min(non_zero_points, axis=0).flatten()
-            x_max, y_max = np.max(non_zero_points, axis=0).flatten()
-            # Ensure coordinates are within bounds
-            x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
-            x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
-            # Crop the warped image to the bounding box
-            cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
-            img = Image.fromarray(cropped_warped_image)
+            img = Image.fromarray(warped_image)
+            # gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+            # non_zero_points = cv2.findNonZero(gray_warped)
+            # if non_zero_points is None:
+            #     return img  # No valid transformation, return original image
+            # # Compute the bounding box
+            # x_min, y_min = np.min(non_zero_points, axis=0).flatten()
+            # x_max, y_max = np.max(non_zero_points, axis=0).flatten()
+            # # Ensure coordinates are within bounds
+            # x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
+            # x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
+            # # Crop the warped image to the bounding box
+            # cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
+            # img = Image.fromarray(cropped_warped_image)
+        img = self.recalculate_width_height(img)
         return img
 
     def rotation(self, image, angle_range=(-60, 60)):

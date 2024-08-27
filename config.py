@@ -46,7 +46,7 @@ augmenter = Augmenter()
 # rotation_angles = [-30,0,30]
 # rotation_angles_cylinder = [-30,-15,0,15,30]
 
-# classes = ['aia2']
+# classes = ['RedBull']
 # num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)
 # num_frames = num_images
 # i=0
@@ -109,7 +109,7 @@ for _ in range(len(classes)):
                     elif(area == areas[2]):
                         augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
                     i+=1
-# augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.5)
+augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.5)
 # ===================================== Test Config =====================================================
 
 # # video_path = 'video/video.mp4'
