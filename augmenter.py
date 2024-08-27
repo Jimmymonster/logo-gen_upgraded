@@ -453,6 +453,38 @@ class Augmenter:
             else:
                 perspective_angle%=360
                 img = self.curve_image_y_axis(img, 'down', curvature=perspective_angle/7200)
+            
+            if(perspective_angle>180):
+                angle = 360 - perspective_angle
+            else:
+                angle = perspective_angle
+            wrapx = (width*angle)/180
+            wrapy = (height*angle)/180 
+            pts1 = np.float32([[0,0], [width-1,0], [0,height-1], [width-1,height-1]])
+            pts2 = pts2 = np.float32([
+                [0, wrapy],
+                [width-1, wrapy],
+                [0, height-1-wrapy],
+                [width-1, height-1-wrapy]
+            ])
+            matrix = cv2.getPerspectiveTransform(pts1, pts2)
+            # Apply perspective transform to the image
+            image_np = np.array(img)
+            warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
+            # Convert to grayscale and find non-zero points
+            gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+            non_zero_points = cv2.findNonZero(gray_warped)
+            if non_zero_points is None:
+                return img  # No valid transformation, return original image
+            # Compute the bounding box
+            x_min, y_min = np.min(non_zero_points, axis=0).flatten()
+            x_max, y_max = np.max(non_zero_points, axis=0).flatten()
+            # Ensure coordinates are within bounds
+            x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
+            x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
+            # Crop the warped image to the bounding box
+            cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
+            img = Image.fromarray(cropped_warped_image)
         return img
 
     def rotation(self, image, angle_range=(-60, 60)):
