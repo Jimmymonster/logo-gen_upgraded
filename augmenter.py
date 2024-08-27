@@ -8,6 +8,93 @@ class Augmenter:
         self.image_dict = image_dict if image_dict is not None else {}   # images should be a list of PIL Image objects
         self.augmentations = []  # List to store the sequence of augmentations
 
+    def add_dict(self, category, images):
+        """Add or update a category with a list of PIL images."""
+        if not isinstance(images, list) or not all(isinstance(img, Image.Image) for img in images):
+            raise ValueError("Images should be provided as a list of PIL Image objects.")
+        self.image_dict[category] = images
+
+    def remove_dict(self, category):
+        """Remove a category from the dictionary."""
+        if category in self.image_dict:
+            del self.image_dict[category]
+        else:
+            raise ValueError(f"Category '{category}' does not exist.")
+
+    def update_dict(self, category, images):
+        """Update the images in an existing category."""
+        if category in self.image_dict:
+            if not isinstance(images, list) or not all(isinstance(img, Image.Image) for img in images):
+                raise ValueError("Images should be provided as a list of PIL Image objects.")
+            self.image_dict[category] = images
+        else:
+            raise ValueError(f"Category '{category}' does not exist.")    
+    
+    def add_augmentation(self, aug_method_name, *args, image_range=None, **kwargs):
+        """Add an augmentation method to the sequence with arguments and optional image range."""
+        if hasattr(self, aug_method_name):
+            self.augmentations.append((getattr(self, aug_method_name), args, kwargs, image_range))
+        else:
+            raise ValueError(f"Augmentation method '{aug_method_name}' does not exist.")
+    
+    def clear_augmentations(self):
+        self.add_augmentation = []
+
+    def set_augmentations(self, aug_method_data):
+        """Set the sequence of augmentations with methods and their arguments."""
+        self.augmentations = []
+        for method_name, args, kwargs in aug_method_data:
+            self.add_augmentation(method_name, *args, **kwargs)
+        
+    def _apply_augmentations(self, images):
+        """Apply all augmentations in the specified order."""
+        for aug, args, kwargs, image_range in self.augmentations:
+            if image_range is None:
+                # Apply to all images
+                images = [aug(img, *args, **kwargs) for img in images]
+            else:
+                start, end = image_range
+                if(len(images)<start):
+                    continue
+                if(len(images)-1<end):
+                    end = len(images)-1
+                for i in range(start,end+1):
+                    images[i] = aug(images[i] , *args, **kwargs)
+                
+                # Apply to a specific range of images
+                # augmented_images = []
+                # for i, img in enumerate(images):
+                #     if start <= i <= end:
+                #         augmented_images.append(aug(img, *args, **kwargs))
+                #     else:
+                #         augmented_images.append(img)
+                # images = augmented_images
+        return images
+
+    def augment(self, category, num_images, random=True):
+        """Select and augment a number of images from the specified category."""
+        if category not in self.image_dict:
+            raise ValueError(f"Category '{category}' does not exist in the image dictionary.")
+        images = self.image_dict[category]
+        if not images:
+            raise ValueError(f"No images available in category '{category}'.")
+        # Ensure num_images is a positive integer
+        if num_images <= 0:
+            raise ValueError("The number of images to augment must be a positive integer.")
+        # Select images evenly, looping over if necessary
+        if(random == True):
+            selected_images = [images[i % len(images)] for i in range(num_images)]
+        else:
+            repetitions = num_images // len(images)
+            remainder = num_images % len(images)
+            selected_images = []
+            for idx, img in enumerate(images):
+                count = repetitions + (1 if idx < remainder else 0)
+                selected_images.extend([img] * count)
+        # Apply augmentations to the selected images
+        augmented_images =  self._apply_augmentations(selected_images)
+        return augmented_images
+    
     #=========================== utility function =====================================
     def pil_to_cv(self, pil_image):
         cv_image = np.array(pil_image)
@@ -104,94 +191,7 @@ class Augmenter:
         cropped_warped_image = image[y_min:y_max+1, x_min:x_max+1]
         img = Image.fromarray(cropped_warped_image)
         return img
-    #===================================================================================
-
-    def add_dict(self, category, images):
-        """Add or update a category with a list of PIL images."""
-        if not isinstance(images, list) or not all(isinstance(img, Image.Image) for img in images):
-            raise ValueError("Images should be provided as a list of PIL Image objects.")
-        self.image_dict[category] = images
-
-    def remove_dict(self, category):
-        """Remove a category from the dictionary."""
-        if category in self.image_dict:
-            del self.image_dict[category]
-        else:
-            raise ValueError(f"Category '{category}' does not exist.")
-
-    def update_dict(self, category, images):
-        """Update the images in an existing category."""
-        if category in self.image_dict:
-            if not isinstance(images, list) or not all(isinstance(img, Image.Image) for img in images):
-                raise ValueError("Images should be provided as a list of PIL Image objects.")
-            self.image_dict[category] = images
-        else:
-            raise ValueError(f"Category '{category}' does not exist.")    
-    
-    def add_augmentation(self, aug_method_name, *args, image_range=None, **kwargs):
-        """Add an augmentation method to the sequence with arguments and optional image range."""
-        if hasattr(self, aug_method_name):
-            self.augmentations.append((getattr(self, aug_method_name), args, kwargs, image_range))
-        else:
-            raise ValueError(f"Augmentation method '{aug_method_name}' does not exist.")
-    
-    def clear_augmentations(self):
-        self.add_augmentation = []
-
-    def set_augmentations(self, aug_method_data):
-        """Set the sequence of augmentations with methods and their arguments."""
-        self.augmentations = []
-        for method_name, args, kwargs in aug_method_data:
-            self.add_augmentation(method_name, *args, **kwargs)
-        
-    def _apply_augmentations(self, images):
-        """Apply all augmentations in the specified order."""
-        for aug, args, kwargs, image_range in self.augmentations:
-            if image_range is None:
-                # Apply to all images
-                images = [aug(img, *args, **kwargs) for img in images]
-            else:
-                start, end = image_range
-                if(len(images)<start):
-                    continue
-                if(len(images)-1<end):
-                    end = len(images)-1
-                for i in range(start,end+1):
-                    images[i] = aug(images[i] , *args, **kwargs)
-                
-                # Apply to a specific range of images
-                # augmented_images = []
-                # for i, img in enumerate(images):
-                #     if start <= i <= end:
-                #         augmented_images.append(aug(img, *args, **kwargs))
-                #     else:
-                #         augmented_images.append(img)
-                # images = augmented_images
-        return images
-
-    def augment(self, category, num_images, random=True):
-        """Select and augment a number of images from the specified category."""
-        if category not in self.image_dict:
-            raise ValueError(f"Category '{category}' does not exist in the image dictionary.")
-        images = self.image_dict[category]
-        if not images:
-            raise ValueError(f"No images available in category '{category}'.")
-        # Ensure num_images is a positive integer
-        if num_images <= 0:
-            raise ValueError("The number of images to augment must be a positive integer.")
-        # Select images evenly, looping over if necessary
-        if(random == True):
-            selected_images = [images[i % len(images)] for i in range(num_images)]
-        else:
-            repetitions = num_images // len(images)
-            remainder = num_images % len(images)
-            selected_images = []
-            for idx, img in enumerate(images):
-                count = repetitions + (1 if idx < remainder else 0)
-                selected_images.extend([img] * count)
-        # Apply augmentations to the selected images
-        augmented_images =  self._apply_augmentations(selected_images)
-        return augmented_images
+    #======================================== Augment function ======================
         
     def flip_horizontal(self, img):
         return ImageOps.mirror(img)
@@ -482,19 +482,6 @@ class Augmenter:
             warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
             # Convert to grayscale and find non-zero points
             img = Image.fromarray(warped_image)
-            # gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
-            # non_zero_points = cv2.findNonZero(gray_warped)
-            # if non_zero_points is None:
-            #     return img  # No valid transformation, return original image
-            # # Compute the bounding box
-            # x_min, y_min = np.min(non_zero_points, axis=0).flatten()
-            # x_max, y_max = np.max(non_zero_points, axis=0).flatten()
-            # # Ensure coordinates are within bounds
-            # x_min, y_min = int(max(0, x_min)), int(max(0, y_min))
-            # x_max, y_max = int(min(width - 1, x_max)), int(min(height - 1, y_max))
-            # # Crop the warped image to the bounding box
-            # cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
-            # img = Image.fromarray(cropped_warped_image)
         img = self.recalculate_width_height(img)
         return img
 
