@@ -1,5 +1,5 @@
 from augmenter import Augmenter
-from utils import load_images_from_directory, extract_random_frames, insert_augmented_images, save_yolo_format, ranbow_frames,rgb_frames
+from utils import load_images_from_directory, extract_random_frames, insert_augmented_images, save_yolo_format, save_yolo_obbox_format, ranbow_frames,rgb_frames
 import os,shutil
 import config
 
@@ -18,6 +18,7 @@ if not os.path.exists(output_folder):
 
 augmenter = config.augmenter
 augmented_images = []
+oriented_bboxs = []
 class_indices = []
 for class_name in classes:
     path = os.path.join(logo_folder, class_name)
@@ -25,7 +26,9 @@ for class_name in classes:
     augmenter.add_dict(class_name, images)
 for idx, class_name in enumerate(classes):
     num_class_images = num_images // len(classes)
-    augmented_images.extend(augmenter.augment(class_name, num_class_images, random=config.random_logo))
+    augmented_images_, oriented_bboxs_ = augmenter.augment(class_name, num_class_images, random=config.random_logo)
+    augmented_images.extend(augmented_images_)
+    oriented_bboxs.extend(oriented_bboxs_)
     class_indices.extend([idx] * num_class_images)
 
 if config.video_path == 'rainbow':
@@ -37,6 +40,8 @@ elif config.video_path == 'black':
 else:
     frames = extract_random_frames(video_path, num_frames)
 
-frames_with_augmentations, bounding_boxes = insert_augmented_images(frames, augmented_images, class_indices,whiteout_bboxes=config.whiteout_bboxes,padding_crop=config.padding_crop)
-save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
-
+frames_with_augmentations, bounding_boxes, oriented_bounding_boxs = insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,whiteout_bboxes=config.whiteout_bboxes,padding_crop=config.padding_crop)
+if not config.obbox_format:
+    save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
+else:
+    save_yolo_obbox_format(frames_with_augmentations, oriented_bounding_boxs, output_folder, classes)

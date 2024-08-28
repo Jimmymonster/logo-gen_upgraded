@@ -15,7 +15,7 @@ api_key = env_vars['API_KEY']
 yolo_folder = "output"
 
 # use api call config
-label_studio_project_id = 263
+label_studio_project_id = 242
 
 # manual download json path config
 json_path = 'test.json'
@@ -92,25 +92,26 @@ def convert_yolo_to_label_studio(yolo_folder, name_mapping, output_file):
             annotations = []
             for line in lines:
                 parts = line.strip().split()
-                class_id, x_center, y_center, width, height = map(float, parts)
-                x_center *= 100
-                y_center *= 100
-                width *= 100
-                height *= 100
-                
+                class_id, x1, y1, x2, y2,x3 ,y3,x4,y4 = map(float, parts)
+                x1*=100
+                y1*=100
+                x2*=100
+                y2*=100
+                x3*=100
+                y3*=100
+                x4*=100
+                y4*=100
                 annotation = {
                     # "original_width": 704,
                     # "original_height": 576,
                     # "image_rotation": 0,
-                    "type": "rectanglelabels",
                     "value": {
-                        "x": x_center - width / 2,
-                        "y": y_center - height / 2,
-                        "width": width,
-                        "height": height,
+                        "points":[[x1,y1],[x2,y2],[x3,y3],[x4,y4]],
                         # "image_rotation": 0,
-                        "rectanglelabels": [classes[int(class_id)]]
+                        "closed": True,
+                        "polygonlabels": [classes[int(class_id)]]
                     },
+                    "type": "polygonlabels",
                     "from_name": "label",
                     "to_name": "image",
                     "origin": "manual",

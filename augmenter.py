@@ -48,10 +48,20 @@ class Augmenter:
         
     def _apply_augmentations(self, images):
         """Apply all augmentations in the specified order."""
+        oriented_bboxs = [
+            [
+                (0, 0),                      # Top-left
+                (img.size[0]-1, 0),            # Top-right
+                (img.size[0]-1, img.size[1]-1),  # Bottom-right
+                (0, img.size[1]-1)             # Bottom-left
+            ]
+            for img in images
+        ]
         for aug, args, kwargs, image_range in self.augmentations:
             if image_range is None:
                 # Apply to all images
-                images = [aug(img, *args, **kwargs) for img in images]
+                for i in range(len(images)):
+                    images[i],oriented_bboxs[i] = aug(images[i] , oriented_bboxs[i] ,*args, **kwargs)
             else:
                 start, end = image_range
                 if(len(images)<start):
@@ -59,7 +69,7 @@ class Augmenter:
                 if(len(images)-1<end):
                     end = len(images)-1
                 for i in range(start,end+1):
-                    images[i] = aug(images[i] , *args, **kwargs)
+                    images[i],oriented_bboxs[i] = aug(images[i] , oriented_bboxs[i] ,*args, **kwargs)
                 
                 # Apply to a specific range of images
                 # augmented_images = []
@@ -69,7 +79,7 @@ class Augmenter:
                 #     else:
                 #         augmented_images.append(img)
                 # images = augmented_images
-        return images
+        return images, oriented_bboxs
 
     def augment(self, category, num_images, random=True):
         """Select and augment a number of images from the specified category."""
@@ -113,6 +123,10 @@ class Augmenter:
             pil_image = Image.fromarray(cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB))
         return pil_image
     
+    def reset_obbox(self, image):
+        oriented_bbox=[(0,0),(image.size[0]-1,0),(image.size[0]-1,image.size[1]-1),(0,image.size[1]-1)]
+        return oriented_bbox
+    
     def cut_image_width(self, image: Image.Image, percentage: float, side: str = 'right') -> Image.Image:
         if not 0 < percentage < 1:
             raise ValueError("Percentage must be between 0 and 1 (exclusive).")
@@ -126,7 +140,8 @@ class Augmenter:
             cropped_image = image.crop((0, 0, width - cut_width, height))
         else:
             raise ValueError("Side must be 'left' or 'right'.")
-        return cropped_image
+        oriented_bbox= self.reset_obbox(cropped_image)
+        return cropped_image, oriented_bbox
     
     def trim_image(self, image: Image.Image, direction: str, pixels: int) -> Image.Image:
         width, height = image.size
@@ -140,7 +155,8 @@ class Augmenter:
             trimmed_image = image.crop((0, 0, width - pixels, height))
         else:
             raise ValueError("Direction must be 'top', 'bottom', 'left', or 'right'.")
-        return trimmed_image
+        oriented_bbox= self.reset_obbox(trimmed_image)
+        return trimmed_image, oriented_bbox
     
     def curve_image_y_axis(self, image: Image.Image, direction: str = 'down', curvature: float = 0.5) -> Image.Image:
         # Convert image to numpy array
@@ -169,10 +185,12 @@ class Augmenter:
         # Convert back to PIL image
         new_image = Image.fromarray(new_img_array, mode='RGBA')
         if(direction == 'up'):
-            new_image = self.trim_image(new_image,'top',max_shift)
+            new_image, oriented_bbox = self.trim_image(new_image,'top',max_shift)
         elif(direction == 'down'):
-            new_image = self.trim_image(new_image,'bottom',max_shift)
-        return new_image
+            new_image, oriented_bbox = self.trim_image(new_image,'bottom',max_shift)
+        oriented_bbox = self.reset_obbox(new_image)
+        return new_image, oriented_bbox
+    
     def recalculate_width_height(self,image):
         width, height = image.size
         image = np.array(image)
@@ -190,28 +208,46 @@ class Augmenter:
         # Crop the warped image to the bounding box
         cropped_warped_image = image[y_min:y_max+1, x_min:x_max+1]
         img = Image.fromarray(cropped_warped_image)
-        return img
+
+        oriented_bbox = self.reset_obbox(img)
+        return img, oriented_bbox
     #======================================== Augment function ======================
         
-    def flip_horizontal(self, img):
-        return ImageOps.mirror(img)
+    def flip_horizontal(self, img, oriented_bbox):
+        # Flip the image horizontally
+        flipped_img = ImageOps.mirror(img)
+        # Calculate the new bbox by flipping x-coordinates
+        width = img.size[0]
+        flipped_bbox = [
+            (width - x, y) for (x, y) in oriented_bbox
+        ]
+        return flipped_img, flipped_bbox
 
-    def flip_vertical(self, img):
-        return ImageOps.flip(img)
+    def flip_vertical(self, img, oriented_bbox):
+        # Flip the image vertically
+        flipped_img = ImageOps.flip(img)
+        # Calculate the new bbox by flipping y-coordinates
+        height = img.size[1]
+        flipped_bbox = [
+            (x, height - y) for (x, y) in oriented_bbox
+        ]
+        return flipped_img, flipped_bbox
 
-    def resize(self, image, scale_range=(0.9, 1.5)):
+    def resize(self, image, oriented_bbox, scale_range=(0.9, 1.5)):
         scale = np.random.uniform(scale_range[0], scale_range[1])
         new_size = (int(image.width * scale), int(image.height * scale))
-        return image.resize(new_size, Image.LANCZOS)
+        resized_bbox = [(int(x * scale), int(y * scale)) for (x, y) in oriented_bbox]
+        return image.resize(new_size, Image.LANCZOS), resized_bbox
 
-    def set_resolution(self, image, max_resolution=(80, 80)):
+    def set_resolution(self, image, oriented_bbox, max_resolution=(80, 80)):
         original_width, original_height = image.size
         scale = min(max_resolution[0] / original_width, max_resolution[1] / original_height)
         new_width = int(original_width * scale)
         new_height = int(original_height * scale)
-        return image.resize((new_width, new_height), Image.LANCZOS)
+        resized_bbox = [(int(x * scale), int(y * scale)) for (x, y) in oriented_bbox]
+        return image.resize((new_width, new_height), Image.LANCZOS), resized_bbox
     
-    def set_area(self, image, max_area=40000):
+    def set_area(self, image, oriented_bbox, max_area=40000):
         original_width, original_height = image.size
         original_area = original_width * original_height
         # Determine the scaling factor
@@ -241,9 +277,10 @@ class Augmenter:
         # Compute new dimensions
         new_width = int(original_width * scale_factor)
         new_height = int(original_height * scale_factor)
-        return image.resize((new_width, new_height), Image.LANCZOS)
+        resized_bbox = [(int(x * scale_factor), int(y * scale_factor)) for (x, y) in oriented_bbox]
+        return image.resize((new_width, new_height), Image.LANCZOS), resized_bbox
 
-    def noise(self, image_pil: Image.Image, min_noise_level: float = 25.0, max_noise_level: float = 50.0) -> Image.Image:
+    def noise(self, image_pil: Image.Image, oriented_bbox, min_noise_level: float = 25.0, max_noise_level: float = 50.0) -> Image.Image:
         if image_pil.mode != 'RGBA':
             image_pil = image_pil.convert('RGBA')
         image_np = np.array(image_pil)
@@ -254,9 +291,9 @@ class Augmenter:
         noisy_rgb = np.clip(rgb + noise, 0, 255).astype(np.uint8)
         noisy_image_np = np.dstack((noisy_rgb, alpha))
         noisy_image_pil = Image.fromarray(noisy_image_np, 'RGBA')
-        return noisy_image_pil
+        return noisy_image_pil, oriented_bbox
 
-    def occlusions(self, image_pil: Image.Image, occlusion_images: list, num_occlusions: int = 3) -> Image.Image:
+    def occlusions(self, image_pil: Image.Image, oriented_bbox, occlusion_images: list, num_occlusions: int = 3) -> Image.Image:
         if image_pil.mode != 'RGBA':
             image_pil = image_pil.convert('RGBA')
         result_image = image_pil.copy()
@@ -284,17 +321,17 @@ class Augmenter:
                         center_y - margin < occlusion_center_y < center_y + margin):
                     break
             result_image.paste(occlusion_pil, (x, y), occlusion_pil)
-        return result_image
+        return result_image, oriented_bbox
 
-    def blur(self, pil_image, scale_factor):
+    def blur(self, pil_image, oriented_bbox, scale_factor):
         original_width, original_height = pil_image.size
         new_width = int(original_width / scale_factor)
         new_height = int(original_height / scale_factor)
         downscaled_image = pil_image.resize((new_width, new_height), Image.LANCZOS)
         upscaled_image = downscaled_image.resize((original_width, original_height), Image.LANCZOS)
-        return upscaled_image
+        return upscaled_image, oriented_bbox
 
-    def perspective(self, image, max_warp=0.2):
+    def perspective(self, image, oriented_bbox, max_warp=0.2):
         width, height = image.size
         pts1 = np.float32([[0,0], [width-1,0], [0,height-1], [width-1,height-1]])
         pts2 = np.float32([
@@ -321,9 +358,15 @@ class Augmenter:
         # Crop the warped image to the bounding box
         cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
         result_image = Image.fromarray(cropped_warped_image)
-        return result_image
+
+        oriented_bbox_np = np.float32(oriented_bbox).reshape(-1, 1, 2)
+        warped_bbox_np = cv2.perspectiveTransform(oriented_bbox_np, matrix)
+        warped_bbox = warped_bbox_np.reshape(-1, 2).tolist()
+        adjusted_bbox = [(x - x_min, y - y_min) for x, y in warped_bbox]
+
+        return result_image, adjusted_bbox
     
-    def set_perspective(self, image, angle=0, direction=(0,0)):
+    def set_perspective(self, image, oriented_bbox, angle=0, direction=(0,0)):
         width, height = image.size
         if(direction[0]<-1 or direction[0]>1 or direction[1]<-1 or direction[1]>1):
             raise ValueError("[set perspective] : wrong direction input only accept value -1 <= x,y <= 1")
@@ -403,9 +446,14 @@ class Augmenter:
         # Crop the warped image to the bounding box
         cropped_warped_image = warped_image[y_min:y_max+1, x_min:x_max+1]
         result_image = Image.fromarray(cropped_warped_image)
-        return result_image
+
+        oriented_bbox_np = np.float32(oriented_bbox).reshape(-1, 1, 2)
+        warped_bbox_np = cv2.perspectiveTransform(oriented_bbox_np, matrix)
+        warped_bbox = warped_bbox_np.reshape(-1, 2).tolist()
+        adjusted_bbox = [(x - x_min, y - y_min) for x, y in warped_bbox]
+        return result_image, adjusted_bbox
     
-    def cylindrical(self, img, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
+    def cylindrical(self, img, oriented_bbox, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
         width, height = img.size
         centerX, centerY = width/2,height/2
         
@@ -420,7 +468,7 @@ class Augmenter:
             else:
                 centerX -= width * (rotation_angle / 180)
             percentage = rotation_angle/180
-            img = self.cut_image_width(img, percentage, side)
+            img, oriented_bbox = self.cut_image_width(img, percentage, side)
 
         # Convert PIL to OpenCV image
         img = self.pil_to_cv(img)
@@ -456,10 +504,10 @@ class Augmenter:
             if(perspective_angle<0):
                 perspective_angle= - perspective_angle
                 perspective_angle%=360
-                img = self.curve_image_y_axis(img, 'up', curvature=perspective_angle/7200)
+                img, oriented_bbox = self.curve_image_y_axis(img, 'up', curvature=perspective_angle/7200)
             else:
                 perspective_angle%=360
-                img = self.curve_image_y_axis(img, 'down', curvature=perspective_angle/7200)
+                img, oriented_bbox = self.curve_image_y_axis(img, 'down', curvature=perspective_angle/7200)
             
             if(perspective_angle>180):
                 angle = 360 - perspective_angle
@@ -482,10 +530,10 @@ class Augmenter:
             warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
             # Convert to grayscale and find non-zero points
             img = Image.fromarray(warped_image)
-        img = self.recalculate_width_height(img)
-        return img
+        img , oriented_bbox = self.recalculate_width_height(img)
+        return img , oriented_bbox
 
-    def rotation(self, image, angle_range=(-60, 60)):
+    def rotation(self, image, oriented_bbox, angle_range=(-60, 60)):
         angle = np.random.uniform(angle_range[0], angle_range[1])
         width, height = image.size
         angle_rad = np.radians(angle)
@@ -495,9 +543,30 @@ class Augmenter:
         new_height = int(width * sin_a + height * cos_a)
         rotated_image = image.rotate(angle, resample=Image.Resampling.BICUBIC, expand=True)
         resized_image = rotated_image.resize((new_width, new_height), resample=Image.Resampling.BICUBIC)
-        return resized_image
+
+        original_center = np.array([width / 2, height / 2])
+        rotated_center = np.array([rotated_image.width / 2, rotated_image.height / 2])
+
+        # Rotate the bounding box
+        rotated_bbox = []
+        angle_rad = np.radians(-angle)
+        for point in oriented_bbox:
+            # Convert point to numpy array
+            point = np.array(point)
+            # Translate point to origin
+            translated_point = point - original_center
+            # Rotate point
+            rotated_point = np.dot(
+                np.array([[np.cos(angle_rad), -np.sin(angle_rad)], 
+                        [np.sin(angle_rad),  np.cos(angle_rad)]]), 
+                translated_point
+            )
+            # Translate point back and adjust for the new center
+            rotated_point += rotated_center
+            rotated_bbox.append(tuple(rotated_point))
+        return resized_image, rotated_bbox
         
-    def stretch(self, image_pil: Image.Image, scale_range= (0.5,1.5), min_strech = 0.0) -> Image.Image:
+    def stretch(self, image_pil: Image.Image, oriented_bbox, scale_range= (0.5,1.5), min_strech = 0.0) -> Image.Image:
         original_width, original_height = image_pil.size
         scale_x=1.0
         scale_y=1.0
@@ -521,9 +590,10 @@ class Augmenter:
         new_width = int(original_width * scale_x)
         new_height = int(original_height * scale_y)
         stretched_image = image_pil.resize((new_width, new_height), Image.Resampling.BILINEAR)
-        return stretched_image
+        stretched_bbox = [(int(x * scale_x), int(y * scale_y)) for (x, y) in oriented_bbox]
+        return stretched_image, stretched_bbox
 
-    def hue_color(self, img: Image.Image,brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0)) -> Image.Image:
+    def hue_color(self, img: Image.Image, oriented_bbox, brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0)) -> Image.Image:
         if img.mode not in ('RGB', 'RGBA'):
             raise ValueError("Image mode must be RGB or RGBA")
         alpha = None
@@ -556,9 +626,9 @@ class Augmenter:
         # Reattach alpha channel if it was separated
         if alpha:
             img = Image.merge('RGBA', (img.convert('RGB').split() + (alpha,)))
-        return img
+        return img, oriented_bbox
     
-    def rgb_color(self, image, target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255))):
+    def rgb_color(self, image, oriented_bbox, target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255))):
         if image.mode == 'RGBA':
             image = image.convert('RGBA')
         elif image.mode != 'RGB':
@@ -585,9 +655,9 @@ class Augmenter:
                     # Set the new color, preserving alpha
                     pixels[i, j] = (new_r, new_g, new_b, alpha) if image.mode == 'RGBA' else (new_r, new_g, new_b)
         
-        return image
+        return image, oriented_bbox
     
-    def adjust_opacity(self, pil_image: Image.Image, opacity: float) -> Image.Image:
+    def adjust_opacity(self, pil_image: Image.Image, oriented_bbox, opacity: float) -> Image.Image:
         if pil_image.mode != 'RGBA':
             raise ValueError("Image must have 'RGBA' mode to adjust opacity.")
         # Convert image to 'RGBA' if it's not already
@@ -598,9 +668,9 @@ class Augmenter:
         alpha = a.point(lambda p: int(p * opacity))
         # Merge the bands back together
         pil_image = Image.merge('RGBA', (r, g, b, alpha))
-        return pil_image
+        return pil_image, oriented_bbox
     
-    def adjust_background_opacity(self, pil_image: Image.Image, rgb_color: tuple, background_opacity: float) -> Image.Image:
+    def adjust_background_opacity(self, pil_image: Image.Image, oriented_bbox, rgb_color: tuple, background_opacity: float) -> Image.Image:
         if pil_image.mode != 'RGBA':
             pil_image = pil_image.convert('RGBA')
         # Split the image into its component bands
@@ -610,4 +680,4 @@ class Augmenter:
         # Composite the background and the original image
         result_image = Image.alpha_composite(background, pil_image)
 
-        return result_image
+        return result_image, oriented_bbox
