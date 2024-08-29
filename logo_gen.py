@@ -1,5 +1,5 @@
 from augmenter import Augmenter
-from utils import load_images_from_directory, extract_random_frames, insert_augmented_images, save_yolo_format, save_yolo_obbox_format, ranbow_frames,rgb_frames
+from utils import load_images_from_directory, extract_random_images, extract_random_frames, insert_augmented_images, save_yolo_format, save_yolo_obbox_format, ranbow_frames,rgb_frames
 import os,shutil
 import config
 
@@ -31,12 +31,14 @@ for idx, class_name in enumerate(classes):
     oriented_bboxs.extend(oriented_bboxs_)
     class_indices.extend([idx] * num_class_images)
 
-if config.video_path == 'rainbow':
+if video_path == 'rainbow':
     frames = ranbow_frames(num_frames)
-elif config.video_path == 'white':
+elif video_path == 'white':
     frames = rgb_frames(num_frames,rgb=(255,255,255))
-elif config.video_path == 'black':
+elif video_path == 'black':
     frames = rgb_frames(num_frames,rgb=(0,0,0))
+elif os.path.isdir(video_path):
+    frames = extract_random_images(video_path, num_frames)
 else:
     frames = extract_random_frames(video_path, num_frames)
 

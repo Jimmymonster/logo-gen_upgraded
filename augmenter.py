@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageFilter
 import random
 
 class Augmenter:
@@ -157,6 +157,31 @@ class Augmenter:
             raise ValueError("Direction must be 'top', 'bottom', 'left', or 'right'.")
         oriented_bbox= self.reset_obbox(trimmed_image)
         return trimmed_image, oriented_bbox
+    
+    def vertical_lighting(self, img: Image.Image, lighting_angle=0, lighting_strokeWidth=0, lighting_luminance=0, lighting_opacity=0):
+        if(lighting_strokeWidth==0 or lighting_opacity==0):
+            return img
+        width, height = img.size
+        # Create a blank image for the lighting effect
+        lighting_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(lighting_layer)
+        # Calculate the x-position for the light based on the angle
+        angle_rad = np.radians(lighting_angle)
+        x_center = width / 2 + np.tan(angle_rad) * (height / 2)
+        # Adjust stroke width based on luminance
+        lighting_strokeWidth = max(1, int(lighting_strokeWidth * lighting_luminance))
+        # Draw the lighting effect
+        draw.line(
+            [(x_center, 0), (x_center, height)],
+            fill=(255, 255, 255, int(lighting_opacity * 255)),
+            width=lighting_strokeWidth
+        )
+        # Apply a Gaussian blur to simulate light spread
+        lighting_layer = lighting_layer.filter(ImageFilter.GaussianBlur(radius=lighting_luminance))
+        # Combine the lighting effect with the original image
+        combined = Image.alpha_composite(img, lighting_layer)
+
+        return combined
     
     def curve_image_y_axis(self, image: Image.Image, direction: str = 'down', curvature: float = 0.5) -> Image.Image:
         # Convert image to numpy array
@@ -453,7 +478,7 @@ class Augmenter:
         adjusted_bbox = [(x - x_min, y - y_min) for x, y in warped_bbox]
         return result_image, adjusted_bbox
     
-    def cylindrical(self, img, oriented_bbox, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0):
+    def cylindrical(self, img, oriented_bbox, focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0, lighting_angle=0, lighting_strokeWidth=0, lighting_luminance=0, lighting_opacity=0):
         width, height = img.size
         centerX, centerY = width/2,height/2
         
@@ -469,7 +494,7 @@ class Augmenter:
                 centerX -= width * (rotation_angle / 180)
             percentage = rotation_angle/180
             img, oriented_bbox = self.cut_image_width(img, percentage, side)
-
+        img = self.vertical_lighting(img=img,lighting_angle=lighting_angle,lighting_strokeWidth=lighting_strokeWidth,lighting_luminance=lighting_luminance,lighting_opacity=lighting_opacity)
         # Convert PIL to OpenCV image
         img = self.pil_to_cv(img)
         # height, width = img.shape[:2]

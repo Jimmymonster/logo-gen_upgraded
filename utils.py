@@ -27,6 +27,30 @@ def load_images_from_directory(directory_path: str) -> list:
                 print(f"Failed to load image {file_path}: {e}")
     return images
 
+def extract_random_images(folder_path, num_images):
+    # List all files in the folder
+    all_files = os.listdir(folder_path)
+    
+    # Filter the list to include only image files (common image formats)
+    image_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
+    image_files = [file for file in all_files if file.lower().endswith(image_extensions)]
+    
+    # Check if the requested number of images is greater than the available images
+    if num_images > len(image_files):
+        raise ValueError(f"Requested {num_images} images, but only {len(image_files)} are available in the directory.")
+    
+    # Randomly select the specified number of images
+    selected_images = random.sample(image_files, num_images)
+    
+    # Load the selected images and convert them to NumPy arrays
+    images = []
+    for image_file in selected_images:
+        image_path = os.path.join(folder_path, image_file)
+        with Image.open(image_path) as img:
+            images.append(np.array(img))
+    
+    return images
+
 def extract_random_frames(video_path, num_frames):
     """Randomly extract a specific number of frames from the video."""
     video_capture = cv2.VideoCapture(video_path)

@@ -9,7 +9,7 @@ flip_horizontal()
 flip_vertical()
 perspective(max_warp=0.2)
 set_perspective(angle=10, direction=(0,0)):  direction in (x,y) example if want southeast input as (1,-1)
-cylindrical(focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0) <--! Note that cylindrical shape shoundn't use with perspective function, perspective function only work for 2d image.
+cylindrical(focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0, lighting_angle=0, lighting_strokeWidth=0, lighting_luminance=0, lighting_opacity=0) <--! Note that cylindrical shape shoundn't use with perspective function, perspective function only work for 2d image.
 rotation(angle_range=(-60, 60))
 
 === sizing operation ===
@@ -31,37 +31,91 @@ augmenter = Augmenter()
 
 #============================== Config gen 3 fix augment all ==============================================
 
-video_path = 'video/video_mono29.mp4'
+# video_path = 'video/video_TNN2.mp4'
+# # video_path = 'white' # white, black, rainbow
+# logo_folder = 'logos'
+# output_folder = 'output'
+# random_logo = True
+# padding_crop = False
+# obbox_format = False
+# # whiteout_bboxes = [(620,90,668,175)] TNN
+# whiteout_bboxes = []
+
+# # rectangle areas
+# # areas = [3500,15000,35000]
+# # square areas
+# areas = [10000,25000,50000]
+# perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
+# perspec_angles = [25]
+# rotation_angles = [-30,0,30]
+# # perspec_angles = [15,30]
+# # rotation_angles = [-45,-30,0,30,45]
+# copy = 1
+
+# classes = ['mrdiy1']
+# num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)*copy
+# num_frames = num_images
+# i=0
+# # for _ in range(len(classes)):
+# for _ in range(len(classes)*copy):
+#     for area in areas:
+#         for rotation_angle in rotation_angles:
+#             for perspec_angle in perspec_angles:
+#                 for (x,y) in perspec_directions:
+#                     augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+#                     augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+#                     augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+#                     # if(area == areas[0] or i%4==0):
+#                     #     augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+#                     # elif(area == areas[1]):
+#                     #     augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+#                     # elif(area == areas[2]):
+#                     #     augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
+#                     i+=1
+# # for _ in range(len(classes)):
+# #     for x in rotation_angles_cylinder:
+# #         augmenter.add_augmentation('set_area',max_area=15000,image_range=(i,i))
+# #         augmenter.add_augmentation('cylindrical',focal_len_x=50, focal_len_y=50, rotation_angle = x, perspective_angle=0, image_range=(i,i))
+# #         augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+# #         i+=1
+
+# augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
+# augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+# # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.25)
+
+# ===================================== Cylinder Config ================================================
+video_path = 'video/video_TNN.mp4'
 # video_path = 'white' # white, black, rainbow
 logo_folder = 'logos'
 output_folder = 'output'
 random_logo = True
 padding_crop = False
-obbox_format = True
-# whiteout_bboxes = [(620,90,668,175)] TNN
+obbox_format = False
+# whiteout_bboxes = [(620,90,668,175)]
 whiteout_bboxes = []
 
 areas = [3500,15000,35000]
-perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
-perspec_angles = [25]
+perspec_angles = [-30,-15,0,15,30]
 rotation_angles = [-30,0,30]
-# perspec_angles = [15,30]
-# rotation_angles = [-45,-30,0,30,45]
+rotation_angles_normal = [0]
+# perspec_angles = [-30,-15,0,15,30]
+# rotation_angles = [-30,-15,0,15,30]
+# rotation_angles_normal = [0,15]
 copy = 1
 
 classes = ['RedBull']
-num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)*copy
+num_images = len(areas)*len(perspec_angles)*len(rotation_angles)*len(rotation_angles_normal)*len(classes)*copy
 num_frames = num_images
 i=0
-# for _ in range(len(classes)):
 for _ in range(len(classes)*copy):
     for area in areas:
         for rotation_angle in rotation_angles:
             for perspec_angle in perspec_angles:
-                for (x,y) in perspec_directions:
+                for rotation_angle_normal in rotation_angles_normal:
+                # for (x,y) in perspec_directions:
                     augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-                    augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-                    augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                    augmenter.add_augmentation('cylindrical',focal_len_x=80, focal_len_y=80, rotation_angle = rotation_angle, perspective_angle=perspec_angle, image_range=(i,i), lighting_angle=45, lighting_strokeWidth=3, lighting_luminance=5, lighting_opacity=1)
+                    augmenter.add_augmentation('rotation',angle_range=(rotation_angle_normal,rotation_angle_normal),image_range=(i,i))
                     if(area == areas[0] or i%4==0):
                         augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
                     elif(area == areas[1]):
@@ -69,53 +123,7 @@ for _ in range(len(classes)*copy):
                     elif(area == areas[2]):
                         augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
                     i+=1
-# for _ in range(len(classes)):
-#     for x in rotation_angles_cylinder:
-#         augmenter.add_augmentation('set_area',max_area=15000,image_range=(i,i))
-#         augmenter.add_augmentation('cylindrical',focal_len_x=50, focal_len_y=50, rotation_angle = x, perspective_angle=0, image_range=(i,i))
-#         augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-#         i+=1
-
-augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
-# augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.25)
-
-# ===================================== Cylinder Config ================================================
-# video_path = 'video/video_ch7.mp4'
-# # video_path = 'white' # white, black, rainbow
-# logo_folder = 'logos'
-# output_folder = 'output'
-# random_logo = True
-# padding_crop = False
-# # whiteout_bboxes = [(620,90,668,175)]
-# whiteout_bboxes = []
-
-# areas = [3500,15000,35000]
-# perspec_angles = [-30,-15,0,15,30]
-# rotation_angles = [-30,-15,0,15,30]
-# rotation_angles_normal = [0,15]
-
-# classes = ['RedBull']
-# num_images = len(areas)*len(perspec_angles)*len(rotation_angles)*len(rotation_angles_normal)*len(classes)*2
-# num_frames = num_images
-# i=0
-# for _ in range(2):
-#     for area in areas:
-#         for rotation_angle in rotation_angles:
-#             for perspec_angle in perspec_angles:
-#                 for rotation_angle_normal in rotation_angles_normal:
-#                 # for (x,y) in perspec_directions:
-#                     augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-#                     augmenter.add_augmentation('cylindrical',focal_len_x=80, focal_len_y=80, rotation_angle = rotation_angle, perspective_angle=perspec_angle, image_range=(i,i))
-#                     augmenter.add_augmentation('rotation',angle_range=(rotation_angle_normal,rotation_angle_normal),image_range=(i,i))
-#                     if(area == areas[0] or i%4==0):
-#                         augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-#                     elif(area == areas[1]):
-#                         augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-#                     elif(area == areas[2]):
-#                         augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
-#                     i+=1
-# # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.5)
+# augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.5)
 # ===================================== Test Config =====================================================
 
 # # video_path = 'video/video.mp4'
