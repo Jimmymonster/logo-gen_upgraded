@@ -43,44 +43,43 @@ class Blackgrounder:
             image_per_source = [0 for _ in range(len(self.background_dict[dict_name]))]
             total_image_per_source = []
             leftover_images = total_images_needed
+            leftover_source = len(self.background_dict[dict_name])
+            
 
             for j, (_, _, num_images) in enumerate(self.background_dict[dict_name]):
                 if(num_images<0):
-                    total_image_per_source.append(total_images_needed)
+                    total_image_per_source.append([total_images_needed,j])
                 else:
-                    total_image_per_source.append(num_images)
+                    total_image_per_source.append([num_images,j])
 
             # Distribute remaining images to sources with available images
-            while(leftover_images>0):
-                min_positive = 1e9
-                for num in total_image_per_source:
-                    if 0 < num < min_positive:
-                        min_positive = num
-                for j in range(len(image_per_source)):
-                    if total_image_per_source[j] > 0:
-                        if total_image_per_source[j] >= min_positive:
-                            # Allocate images from this source
-                            image_per_source[j] += min_positive
-                            total_image_per_source[j] -= min_positive
-                            leftover_images -= min_positive
-                            
-                        else:
-                            # Allocate remaining images from this source
-                            image_per_source[j] += total_image_per_source[j]
-                            leftover_images -= total_image_per_source[j]
-                            total_image_per_source[j] = 0
+            total_image_per_source = sorted(total_image_per_source)
+            for minnow,j in total_image_per_source:
+                useNow = leftover_source*minnow
+                if(useNow<=leftover_images):
+                    leftover_images -= minnow
+                    image_per_source[j] = minnow
+                    leftover_source-=1
+                else:
+                    useNow = leftover_images//leftover_source
+                    isRemain = 1 if (leftover_images%leftover_source!=0) else 0
+                    image_per_source[j] = useNow+isRemain
+                    leftover_source-=1
+                    leftover_images-=useNow+isRemain
+
                 
             # Extract images from sources
             for j, (type, path, _) in enumerate(self.background_dict[dict_name]):
                 if type == "rgb":
                     for _ in range(image_per_source[j]):
                         # Here you would add a blank image with the RGB color
-                        backgrounds.append(path)
+                        backgrounds.append(path.copy())
                 elif type == "image":
                     images = [file for file in os.listdir(path) if file.lower().endswith(image_extensions)]
                     selected_images = random.sample(images, image_per_source[j])
                     for image_name in selected_images:
                         image = cv2.imread(os.path.join(path, image_name))
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                         backgrounds.append(image)
                 elif type == "video":
                     video = cv2.VideoCapture(path)
@@ -89,7 +88,7 @@ class Blackgrounder:
                         video.set(cv2.CAP_PROP_POS_FRAMES, idx)
                         ret, frame = video.read()
                         if ret:
-                            backgrounds.append(frame)
+                            backgrounds.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             # do apply setting to image
             if(background_edit_setting_list[i] is not None):
                 all_backgrounds.extend(self._apply_settings(backgrounds,background_edit_setting_list[i]))
@@ -97,12 +96,12 @@ class Blackgrounder:
                 all_backgrounds.extend(backgrounds)
         
         # do shuffle every images and save in list (optional)
-        random.shuffle(backgrounds)
+        random.shuffle(all_backgrounds)
         # return list of background the total background eqaul sum of num bg list
         return all_backgrounds
     
     def add_rgb_bg_dict(self, name, rgb, width, height):
-        rgb_image = np.full((width, height, 3), rgb, dtype=np.uint8)
+        rgb_image = np.full((height, width, 3), rgb, dtype=np.uint8)
         if name in self.background_dict:
             self.background_dict[name].append(["rgb",rgb_image])
         else:

@@ -44,10 +44,10 @@ for idx, class_name in enumerate(classes):
 #     frames = extract_random_frames(video_path, num_frames)
 backgrounder = Blackgrounder()
 backgrounder.add_dict("dict1","video/video_TNN.mp4","video")
-backgrounder.add_dict("dict1","video/ch3","image")
+backgrounder.add_dict("dict1","video/ch5","image")
 backgrounder.add_rgb_bg_dict("dict1",width=704,height=576,rgb=(255,255,255))
-backgrounder.add_settings("shift","hsv_shift",hue_shift=10)
-frames = backgrounder.get_background(["dict1"],[num_frames],[None])
+backgrounder.add_settings("shift","rgb_shift",red_shift=-500)
+frames = backgrounder.get_background(["dict1"],[num_frames],["shift"])
 
 frames_with_augmentations, bounding_boxes, oriented_bounding_boxs = insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,whiteout_bboxes=config.whiteout_bboxes,padding_crop=config.padding_crop)
 if not config.obbox_format:
