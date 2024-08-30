@@ -19,21 +19,35 @@ class Blackgrounder:
             if background_edit_setting_list[i] is not None and background_edit_setting_list[i] not in self.background_edit_settings_dict:
                 raise ValueError(f"Dictionary '{dict_name}' not found in background_edit_settings_dict.")
             total_images=0
-            for j,(type,path) in enumerate(self.background_dict[dict_name]):
+            for j,(type,path,max_frames) in enumerate(self.background_dict[dict_name]):
                 if(type == "rgb"):
-                    self.background_dict[dict_name][j].append(-1) # -1 mean infinity
-                    total_images+=num_bg_list[i]
+                    if max_frames is not None:
+                        self.background_dict[dict_name][j][2] = max_frames # -1 mean infinity
+                        total_images+=max_frames
+                    else:
+                        self.background_dict[dict_name][j][2] = -1 # -1 mean infinity
+                        total_images+=num_bg_list[i]
                 elif(type == "image"):
                     image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp")
                     # Count the number of image files
                     images = len([file for file in os.listdir(path) if file.lower().endswith(image_extensions)])
-                    self.background_dict[dict_name][j].append(images)
-                    total_images += images
+                    if max_frames is not None:
+                        tmp = min(images,max_frames)
+                        self.background_dict[dict_name][j][2] = tmp
+                        total_images += tmp
+                    else:
+                        self.background_dict[dict_name][j][2] = images
+                        total_images += images
                 elif(type == "video"):
                     video = cv2.VideoCapture(path)
                     images = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-                    self.background_dict[dict_name][j].append(images)
-                    total_images += images
+                    if max_frames is not None:
+                        tmp = min(images,max_frames)
+                        self.background_dict[dict_name][j][2] = tmp
+                        total_images += tmp
+                    else:
+                        self.background_dict[dict_name][j][2] = images
+                        total_images += images
             if total_images<num_bg_list[i]:
                 raise ValueError(f"Requested more backgrounds ({num_bg_list[i]}) than available in '{dict_name}' ({total_images})")
         # extract image split evenly from every source
@@ -100,24 +114,24 @@ class Blackgrounder:
         # return list of background the total background eqaul sum of num bg list
         return all_backgrounds
     
-    def add_rgb_bg_dict(self, name, rgb, width, height):
+    def add_rgb_bg_dict(self, name, rgb, width, height, max_frames:int = None):
         rgb_image = np.full((height, width, 3), rgb, dtype=np.uint8)
         if name in self.background_dict:
-            self.background_dict[name].append(["rgb",rgb_image])
+            self.background_dict[name].append(["rgb",rgb_image, max_frames])
         else:
             self.background_dict[name] = ["rgb",rgb_image]
-    def add_dict(self, name, path, type):
+    def add_dict(self, name, path, type, max_frames:int = None):
         #there are two types first is image this type path will be directory, second is video this type path will be video file
         if name not in self.background_dict:
             self.background_dict[name] = []
         if type == 'image':
             if not os.path.isdir(path):
                 raise ValueError(f"Path '{path}' is not a directory.")
-            self.background_dict[name].append(["image",path])
+            self.background_dict[name].append(["image",path, max_frames])
         elif type == 'video':
             if not os.path.isfile(path) or not path.lower().endswith(('.mp4', '.avi', '.mov')):
                 raise ValueError(f"Path '{path}' is not a valid video file.")
-            self.background_dict[name].append(["video",path])
+            self.background_dict[name].append(["video",path, max_frames])  
     def remove_dict(self, name):
         if name in self.background_dict:
             del self.background_dict[name]
@@ -183,7 +197,7 @@ class Blackgrounder:
         # Extract ROI
         roi = image[y1:y2, x1:x2]
         # Apply shifts
-        b, g, r = cv2.split(roi)
+        r, g ,b= cv2.split(roi)
         # Shift Blue
         b = cv2.add(b, blue_shift)
         # Shift Green
