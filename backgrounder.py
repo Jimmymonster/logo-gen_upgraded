@@ -2,6 +2,7 @@ import numpy as np
 import os
 import cv2
 import random
+from ultralytics import YOLO
 
 class Blackgrounder:
     # Note that every image is np array not PIL like augmenter
@@ -208,5 +209,26 @@ class Blackgrounder:
         shifted_roi = cv2.merge([b, g, r])
         image[y1:y2, x1:x2] = shifted_roi
         return image
+    
+    def remove_object_with_yolo_model(self, image, model, confident_level=0.5, target_class_name:list = None, rgb=(255,255,255), opacity = 1.0):
+        # Run YOLO inference
+        results = model(image)
+        boxes = results.boxes.xyxy.cpu().numpy()  # Bounding boxes
+        scores = results.boxes.conf.cpu().numpy()  # Confidence scores
+        class_ids = results.boxes.cls.cpu().numpy()  # Class IDs
+        # Retrieve the class names from the YOLOv8 model
+        class_names = results.names
+        for box, score, class_id in zip(boxes, scores, class_ids):
+            if score >= confident_level:
+                class_name = class_names[int(class_id)]
+                # Check if the detected class is in the target_class_name list (if provided)
+                if target_class_name is None or class_name in target_class_name:
+                    x1, y1, x2, y2 = box
+                    # Create a colored rectangle with the specified opacity
+                    overlay = image.copy()
+                    cv2.rectangle(overlay, (int(x1), int(y1)), (int(x2), int(y2)), rgb, -1)
+                    image = cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0)
+        return image
+
     def add_object(self, image, object_image, num_object, position_range=(0.25,0.25,0.75,0.75)):
         return image

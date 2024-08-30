@@ -3,6 +3,7 @@ from backgrounder import Blackgrounder
 from utils import load_images_from_directory, extract_random_images, extract_random_frames, insert_augmented_images, save_yolo_format, save_yolo_obbox_format, ranbow_frames,rgb_frames
 import os,shutil
 import config
+from ultralytics import YOLO
 
 video_path = config.video_path
 logo_folder = config.logo_folder
@@ -42,6 +43,10 @@ for idx, class_name in enumerate(classes):
 #     frames = extract_random_images(video_path, num_frames)
 # else:
 #     frames = extract_random_frames(video_path, num_frames)
+
+# need to load model first if want to use it
+# model = YOLO(model_path)
+
 backgrounder = Blackgrounder()
 backgrounder.add_dict("dict1","video/video_TNN.mp4","video")
 # backgrounder.add_dict("dict1","video/video_TNN2.mp4","video")
