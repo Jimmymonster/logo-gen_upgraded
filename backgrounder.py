@@ -120,7 +120,7 @@ class Blackgrounder:
         if name in self.background_dict:
             self.background_dict[name].append(["rgb",rgb_image, max_frames])
         else:
-            self.background_dict[name] = ["rgb",rgb_image]
+            self.background_dict[name] = ["rgb",rgb_image, max_frames]
     def add_dict(self, name, path, type, max_frames:int = None):
         #there are two types first is image this type path will be directory, second is video this type path will be video file
         if name not in self.background_dict:
@@ -212,22 +212,24 @@ class Blackgrounder:
     
     def remove_object_with_yolo_model(self, image, model, confident_level=0.5, target_class_name:list = None, rgb=(255,255,255), opacity = 1.0):
         # Run YOLO inference
-        results = model(image)
-        boxes = results.boxes.xyxy.cpu().numpy()  # Bounding boxes
-        scores = results.boxes.conf.cpu().numpy()  # Confidence scores
-        class_ids = results.boxes.cls.cpu().numpy()  # Class IDs
-        # Retrieve the class names from the YOLOv8 model
-        class_names = results.names
-        for box, score, class_id in zip(boxes, scores, class_ids):
-            if score >= confident_level:
-                class_name = class_names[int(class_id)]
-                # Check if the detected class is in the target_class_name list (if provided)
-                if target_class_name is None or class_name in target_class_name:
-                    x1, y1, x2, y2 = box
-                    # Create a colored rectangle with the specified opacity
-                    overlay = image.copy()
-                    cv2.rectangle(overlay, (int(x1), int(y1)), (int(x2), int(y2)), rgb, -1)
-                    image = cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0)
+        results = model(image, verbose=False)
+        # results = model(image)
+        for result in results:
+            boxes = result.boxes.xyxy.cpu().numpy()  # Bounding boxes
+            scores = result.boxes.conf.cpu().numpy()  # Confidence scores
+            class_ids = result.boxes.cls.cpu().numpy()  # Class IDs
+            # Retrieve the class names from the YOLOv8 model
+            class_names = result.names
+            for box, score, class_id in zip(boxes, scores, class_ids):
+                if score >= confident_level:
+                    class_name = class_names[int(class_id)]
+                    # Check if the detected class is in the target_class_name list (if provided)
+                    if target_class_name is None or class_name in target_class_name:
+                        x1, y1, x2, y2 = box
+                        # Create a colored rectangle with the specified opacity
+                        overlay = image.copy()
+                        cv2.rectangle(overlay, (int(x1), int(y1)), (int(x2), int(y2)), rgb, -1)
+                        image = cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0)
         return image
 
     def add_object(self, image, object_image, num_object, position_range=(0.25,0.25,0.75,0.75)):
