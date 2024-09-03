@@ -2,6 +2,7 @@ import numpy as np
 import os
 import cv2
 import random
+from PIL import Image
 from ultralytics import YOLO
 
 class Blackgrounder:
@@ -138,12 +139,12 @@ class Blackgrounder:
             del self.background_dict[name]
         else:
             raise ValueError(f"Background name '{name}' not found in background_dict.")
-    def add_settings(self, setting_dict_name, setting_method_name, *args, **kwargs):
+    def add_settings(self, setting_dict_name, setting_method_name, *args, image_range = None, **kwargs):
         if not hasattr(self, setting_method_name):
             raise ValueError(f"Augmentation method '{setting_method_name}' does not exist.")
         if setting_dict_name not in self.background_edit_settings_dict:
             self.background_edit_settings_dict[setting_dict_name] = []
-        self.background_edit_settings_dict[setting_dict_name].append((getattr(self, setting_method_name), args, kwargs))
+        self.background_edit_settings_dict[setting_dict_name].append((getattr(self, setting_method_name), args, kwargs, image_range))
 
     def clear_settings(self, setting_name):
         if setting_name in self.background_edit_settings_dict:
@@ -151,9 +152,18 @@ class Blackgrounder:
         else:
             raise ValueError(f"Setting name '{setting_name}' not found in background_edit_settings_dict.")
     def _apply_settings(self, images, setting_name):
-        for setting,args,kwargs in self.background_edit_settings_dict[setting_name]:
-            for i in range(len(images)):
-                images[i] = setting(images[i], *args, **kwargs)
+        for setting,args,kwargs,image_range in self.background_edit_settings_dict[setting_name]:
+            if image_range is None:
+                for i in range(len(images)):
+                    images[i] = setting(images[i], *args, **kwargs)
+            else:
+                start, end = image_range
+                if(len(images)<start):
+                    continue
+                if(len(images)-1<end):
+                    end = len(images)-1
+                for i in range(start,end+1):
+                    images[i] = setting(images[i], *args, **kwargs)
         return images
             
 
@@ -232,5 +242,39 @@ class Blackgrounder:
                         image = cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0)
         return image
 
-    def add_object(self, image, object_image, num_object, position_range=(0.25,0.25,0.75,0.75)):
-        return image
+    def add_object(self, image, object_image, num_object, position_range=(0.25, 0.25, 0.75, 0.75), scale_range = (1,1)):
+        # Convert the np.array image to a PIL image for manipulation
+        image_pil = Image.fromarray(image)
+        
+        # Get the dimensions of the base image
+        image_width, image_height = image_pil.size
+        scale = max(100 / image_width, 100 / image_height)
+        object_image = object_image.resize((int(image_width*scale), int(image_height*scale)), Image.LANCZOS) #resize image to baze size
+
+        for _ in range(num_object):
+            # Generate random scaling factor within the scale range
+            scale_factor = np.random.uniform(scale_range[0], scale_range[1])
+            
+            # Resize the object image according to the scaling factor
+            new_object_width = int(object_image.width * scale_factor)
+            new_object_height = int(object_image.height * scale_factor)
+            scaled_object_image = object_image.resize((new_object_width, new_object_height), Image.LANCZOS)
+            
+            # Generate random positions within the specified range
+            min_x = int(position_range[0] * image_width)
+            max_x = int(position_range[2] * image_width) - new_object_width
+            min_y = int(position_range[1] * image_height)
+            max_y = int(position_range[3] * image_height) - new_object_height
+            
+            # Ensure the positions are valid
+            if max_x <= min_x or max_y <= min_y:
+                continue
+            
+            x_position = np.random.randint(min_x, max_x)
+            y_position = np.random.randint(min_y, max_y)
+            
+            # Paste the scaled object image onto the base image at the random position
+            image_pil.paste(scaled_object_image, (x_position, y_position), scaled_object_image)
+        
+        # Convert the image back to an np.array
+        return np.array(image_pil)

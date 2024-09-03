@@ -49,13 +49,13 @@ areas = [3500,15000,35000]
 
 perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
 
-# perspec_angles = [25]
-# rotation_angles = [-30,0,30]
-perspec_angles = [15,30]
-rotation_angles = [-45,-30,0,30,45]
-copy = 2
+perspec_angles = [25]
+rotation_angles = [-30,0,30]
+# perspec_angles = [15,30]
+# rotation_angles = [-45,-30,0,30,45]
+copy = 1
 
-classes = ['ptt']
+classes = ['mrdiy1']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)*copy
 num_frames = num_images
 i=0
@@ -103,10 +103,10 @@ augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_ra
 # # rotation_angles_normal = [0,15]
 # copy = 1
 
-# classes = ['aia']
+# classes = ['sponsor']
 # num_images = len(areas)*len(perspec_angles)*len(rotation_angles)*len(rotation_angles_normal)*len(classes)*copy
 # num_frames = num_images
-# i=0
+# # i=0
 # for _ in range(len(classes)*copy):
 #     for area in areas:
 #         for rotation_angle in rotation_angles:
