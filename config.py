@@ -42,6 +42,7 @@ obbox_format = False
 whiteout_bboxes = []
 
 # rectangle areas
+# areas = [3500,7500,15000,35000,60000]
 areas = [3500,15000,35000]
 
 # square areas
@@ -55,7 +56,7 @@ rotation_angles = [-30,0,30]
 # rotation_angles = [-45,-30,0,30,45]
 copy = 1
 
-classes = ['mrdiy1']
+classes = ['ktbEng']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)*copy
 num_frames = num_images
 i=0
@@ -68,18 +69,25 @@ for _ in range(len(classes)*copy):
                     augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
                     augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
                     augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                    if(area == areas[0] or i%4==0):
-                        augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-                    elif(area == areas[1]):
-                        augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-                    elif(area == areas[2]):
-                        augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
+                    # if(area == areas[0] or i%4==0):
+                    #     augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
+                    # elif(area == areas[1]):
+                    #     augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
+                    # elif(area == areas[2]):
+                    #     augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
                     i+=1
-
+augmenter.add_augmentation('blur',scale_factor=3,image_range=(i,i))
 augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
+augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.0))
+# augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
 # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.25)
 
+num_images+=15
+num_frames=num_images
+areas = [50+i*30 for i in range(0,15)]
+for area in areas:
+    augmenter.add_augmentation('set_resolution',max_resolution=(area,area),image_range=(i,i))
+    i+=1
 # ===================================== Cylinder Config ================================================
 # video_path = 'video/ch3'
 # # video_path = 'white' # white, black, rainbow
