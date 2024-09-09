@@ -69,13 +69,13 @@ backgrounder.add_dict("dict1","video/workpoint","image")
 # backgrounder.add_settings("shift","rgb_shift",position=(0.5 ,0 ,1 ,0.5),green_shift=-500)
 # backgrounder.add_settings("shift","rgb_shift",position=(0 ,0.5 ,0.5 ,1),blue_shift=-500)
 
-backgrounder.add_settings("add","remove_object_with_yolo_model",model, confident_level=0.4, target_class_name = None, rgb=(255,255,255), opacity = 1)
+# backgrounder.add_settings("add","remove_object_with_yolo_model",model, confident_level=0.4, target_class_name = None, rgb=(255,255,255), opacity = 1)
 
 # object_img = [Image.open("temp/object/mrdiy1.png"),Image.open("temp/object/mrdiy2.png"),Image.open("temp/object/mrdiy3.png")]
 # backgrounder.add_settings("add","add_object",object_image=object_img[0] ,num_object=1, position_range=(0, 0, 1, 1), scale_range=(0.5,1.5), image_range=(0,9))
 # backgrounder.add_settings("add","add_object",object_image=object_img[1] ,num_object=1, position_range=(0, 0, 1, 1), scale_range=(0.5,1.5), image_range=(10,19))
 # backgrounder.add_settings("add","add_object",object_image=object_img[2] ,num_object=1, position_range=(0, 0, 1, 1), scale_range=(0.5,1.5), image_range=(20,29))
-frames = backgrounder.get_background(["dict1"],[num_frames],["add"])
+frames = backgrounder.get_background(["dict1"],[num_frames],[None])
 
 frames_with_augmentations, bounding_boxes, oriented_bounding_boxs = insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,whiteout_bboxes=config.whiteout_bboxes,padding_crop=config.padding_crop)
 if not config.obbox_format:

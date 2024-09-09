@@ -591,27 +591,16 @@ class Augmenter:
             rotated_bbox.append(tuple(rotated_point))
         return resized_image, rotated_bbox
         
-    def stretch(self, image_pil: Image.Image, oriented_bbox, scale_range= (0.5,1.5), min_strech = 0.0) -> Image.Image:
+    def stretch(self, image_pil: Image.Image, oriented_bbox, scale_range= (0.5,1.5)) -> Image.Image:
         original_width, original_height = image_pil.size
         scale_x=1.0
         scale_y=1.0
-        if(min_strech<0):
-            raise ValueError("[stretch] : wrong input min_strech should > 0")
         if(scale_range[0] > scale_range[1]):
             raise ValueError("[stretch] : wrong input scale range start should < scale range end")
-        if(1-min_strech<scale_range[0] or 1+min_strech>scale_range[1]):
-            raise ValueError("[stretch] : min stretch should be lower than scale range")
-
+        
         if(random.randint(0, 1) != 0):
-            if(random.randint(0, 1) != 0):
-                scale_x = random.uniform(scale_range[0],1-min_strech)
-            else:
-                scale_x = random.uniform(scale_range[1],1+min_strech)
-        else:
-            if(random.randint(0, 1) != 0):
-                scale_y = random.uniform(scale_range[0],1-min_strech)
-            else:
-                scale_y = random.uniform(scale_range[1],1+min_strech)
+            scale_x = random.uniform(scale_range[0],scale_range[1])
+
         new_width = int(original_width * scale_x)
         new_height = int(original_height * scale_y)
         stretched_image = image_pil.resize((new_width, new_height), Image.Resampling.BILINEAR)

@@ -21,7 +21,7 @@ set_area(max_area=40000)
 noise(min_noise_level: float = 25.0, max_noise_level: float = 50.0)
 occlusions( occlusion_images: list, num_occlusions: int = 3)
 blur(scale_factor)
-stretch(scale_range= (0.5,1.5), min_strech = 0.0)
+stretch(scale_range= (0.5,1.5))
 hue_color(brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0))
 rgb_color(target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255)))
 adjust_opacity(opacity: float)
@@ -43,20 +43,21 @@ whiteout_bboxes = []
 
 # rectangle areas
 # areas = [3500,7500,15000,35000,60000]
-areas = [3500,15000,35000]
+# areas = [3500,15000,35000]
 
 # square areas
-# areas = [10000,25000,50000]
+areas = [25000,50000]
 
 perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
 
 perspec_angles = [25]
 rotation_angles = [-30,0,30]
+stretchs = [0.8,1.2]
 # perspec_angles = [15,30]
 # rotation_angles = [-45,-30,0,30,45]
 copy = 1
 
-classes = ['ktbEng']
+classes = ['aia2']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(classes)*copy
 num_frames = num_images
 i=0
@@ -65,28 +66,26 @@ for _ in range(len(classes)*copy):
     for area in areas:
         for rotation_angle in rotation_angles:
             for perspec_angle in perspec_angles:
-                for (x,y) in perspec_directions:
-                    augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-                    augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-                    augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                    # if(area == areas[0] or i%4==0):
-                    #     augmenter.add_augmentation('blur',scale_factor=1.5,image_range=(i,i))
-                    # elif(area == areas[1]):
-                    #     augmenter.add_augmentation('blur',scale_factor=2.5,image_range=(i,i))
-                    # elif(area == areas[2]):
-                    #     augmenter.add_augmentation('blur',scale_factor=3.5,image_range=(i,i))
-                    i+=1
-augmenter.add_augmentation('blur',scale_factor=3,image_range=(i,i))
-augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
-augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.0))
+                for stretch in stretchs:
+                    for (x,y) in perspec_directions:
+                        augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+                        augmenter.add_augmentation('stretch',scale_range=(stretch,stretch) ,image_range=(i,i))
+                        augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+                        augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                        # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.5,image_range=(i,i))
+                        i+=1
+augmenter.add_augmentation('blur',scale_factor=1.5)
+augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
+augmenter.add_augmentation('hue_color',brightness_range = (0.8,1.2))
 # augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
-# augmenter.add_augmentation('adjust_background_opacity',rgb_color=(255,255,255) , background_opacity=0.25)
 
-num_images+=15
+
+num_images+=5
 num_frames=num_images
-areas = [50+i*30 for i in range(0,15)]
+areas = [50+i*50 for i in range(0,5)]
 for area in areas:
     augmenter.add_augmentation('set_resolution',max_resolution=(area,area),image_range=(i,i))
+    augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.5,image_range=(i,i))
     i+=1
 # ===================================== Cylinder Config ================================================
 # video_path = 'video/ch3'
