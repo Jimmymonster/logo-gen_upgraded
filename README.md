@@ -1,5 +1,5 @@
 # About this project
-This project is about doing augmentation and save it to yolo and yolo-obb format for train yolo model. The concept is augment the target object and place it into background. Augmenter class handle the augment target object and Backgrounder class handle the background.
+This project is about doing augmentation and save it to yolo and yolo-obb format for train yolo model. The concept is augment the target object and place it into background. Augmenter class handle the augmentation of target object and Backgrounder class handle the background generation.
 # How to use
 ### Augmenter
 The Augmenter class contain target object dict which you can add dict during init class or just add it later.<br> Here the command to init class and handle the dict.
