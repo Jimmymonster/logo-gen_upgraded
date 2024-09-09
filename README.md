@@ -14,11 +14,13 @@ images = load_images_from_directory("path_to_image_directory")
 augmenter.add_dict("target_object_name",images)
 ```
 After add dict of all target objects now you can add augmentation function.
+
 ```
 # add augmentation
 augmenter.add_augmentation('set_resolution', max_resolution=(200,200))
 augmenter.add_augmentation('rotation', angle_range=(-30,30), image_range=(0,10)) # <-- specific image range from 0-10 (10 included)
 ```
+
 As you can see augmentation function can target specific image range that you want to augment, if not specified image range the augmentation will apply to all images.<br>
 Here's the list off all augmentation function with parameters
 | Function  | Description |
@@ -34,6 +36,20 @@ Here's the list off all augmentation function with parameters
 | noise(min_noise_level: float = 25.0, max_noise_level: float = 50.0) | Add random noise to the image. |
 | occlusions( occlusion_images: list, num_occlusions: int = 3) | Add object to image in random position. Input is pil image. |
 | blur(scale_factor = 1.5) | Add blur to image by scale down and scale up image which divided by scale factor |
-| stretch(scale_range= (0.5,1.5)) | Random stretch in scale range |
+| stretch(scale_range= (0.5,1.5)) | Random stretch on x axis in scale range. |
+| hue_color(brightness_range = (1.0,1.0), contrast_range = (1.0,1.0), hue_range = (0.0,0.0), saturation_range=(1.0,1.0), gamma_range=(1.0,1.0)) | Change hue color of image by percent in range. |
+| rgb_color(target_color_range=((0, 255), (0, 255), (0, 255)), random_color_range=((0, 255), (0, 255), (0, 255))) | Change color of target image to random color image range in rgb color system. |
+| adjust_opacity(opacity: float) | Adjust opacity of image. |
+| adjust_background_opacity(rgb_color: tuple, background_opacity: float) | Replace transparent background with rgb color and opacity. |
+<br>
+After you add augmentation to target image now you can get augment image by using this command.
+<br>
+
+```
+# get augmentation
+# augmenter.augment('Dict Name', 'Num Images', 'Random') <-- if random is true the image will be spread evenly in the entire list if not the image will be in order of dict list
+
+augmented_images, oriented_bboxs = augmenter.augment("target_object_name", 50, random=True)
+```
 
 ### Got a work to do. I will finish this docs later!!!
