@@ -27,5 +27,13 @@ Here's the list off all augmentation function with parameters
 | flip_vertical()  | flip target object vertical |
 | perspective(max_warp=0.2) | randomly apply perspective to image with max warp default is 0.2 |
 | set_perspective(angle=10, direction=(0,0)) | apply perspective into specific 8 directions with angle (example if want southeast input as (1,-1)) |
+| cylindrical(focal_len_x=100, focal_len_y=100, rotation_angle=0, perspective_angle=0, lighting_angle=0, lighting_strokeWidth=0, lighting_luminance=0, lighting_opacity=0)| Make image wrap around the cylindrical shape like can or bottle. Note that cylindrical shape shoundn't use with any 2d transformation. |
+| resize(scale_range=(0.9, 1.5)) | Random resize in scale range |
+| set_resolution(max_resolution=(80, 80)) | Resize image with largest width or height that not exceed max resolution |
+| set_area(max_area=40000) | Resize image with largest area that not exceed max area |
+| noise(min_noise_level: float = 25.0, max_noise_level: float = 50.0) | Add random noise to the image. |
+| occlusions( occlusion_images: list, num_occlusions: int = 3) | Add object to image in random position. Input is pil image. |
+| blur(scale_factor = 1.5) | Add blur to image by scale down and scale up image which divided by scale factor |
+| stretch(scale_range= (0.5,1.5)) | Random stretch in scale range |
 
 ### Got a work to do. I will finish this docs later!!!
