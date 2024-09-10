@@ -1,87 +1,6 @@
 # About this project
 This project is about doing augmentation and save it to yolo and yolo-obb format for train yolo model. The concept is augment the target object and place it into background. Augmenter class handle the augmentation of target object and Backgrounder class handle the background generation.
 # How to use
-### Example Usage
-
-```
-# init augmenter and parameter
-
-augmenter = Augmenter()
-logo_folder = 'logos'
-output_folder = 'output'
-random_logo = True
-padding_crop = False
-obbox_format = False
-areas = [10000,40000]
-perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
-perspec_angles = [25]
-rotation_angles = [-30,0,30]
-stretchs = [0.7,1,1.3]
-copy = 1
-classes = ['object1','object2']
-num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(stretchs)*len(classes)*copy
-num_frames = num_images
-i=0
-
-# apply augmentation combination
-
-augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
-augmenter.add_augmentation('hue_color',brightness_range = (0.8,1.2))
-augmenter.add_augmentation('blur',scale_factor=3)
-for _ in range(len(classes)*copy):
-    for area in areas:
-        for rotation_angle in rotation_angles:
-            for perspec_angle in perspec_angles:
-                for stretch in stretchs:
-                    for (x,y) in perspec_directions:
-                        augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-                        if stretch != 1:
-                            augmenter.add_augmentation('stretch',scale_range=(stretch,stretch) ,image_range=(i,i))
-                        augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
-                        augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                        augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
-                        i+=1
-
-#get augmentation images
-
-augmented_images = []
-oriented_bboxs = []
-class_indices = []
-for class_name in classes:
-    path = os.path.join(logo_folder, class_name)
-    images = load_images_from_directory(path)
-    augmenter.add_dict(class_name, images)
-for idx, class_name in enumerate(classes):
-    num_class_images = num_images // len(classes)
-    augmented_images_, oriented_bboxs_ = augmenter.augment(class_name, num_class_images, random=config.random_logo)
-    augmented_images.extend(augmented_images_)
-    oriented_bboxs.extend(oriented_bboxs_)
-    class_indices.extend([idx] * num_class_images)
-
-# init backgrounder
-
-backgrounder = Blackgrounder()
-model = YOLO("model/remove_object.pt")
-backgrounder.add_dict("dict1","video/video_TNN.mp4","video")
-backgrounder.add_dict("dict1","video/ch3","image")
-backgrounder.add_rgb_bg_dict("dict1",width=704,height=576,rgb=(255,255,255))
-backgrounder.add_settings("add","remove_object_with_yolo_model",model, confident_level=0.4, target_class_name = None, rgb=(255,255,255), opacity = 1)
-
-# get background
-
-frames = backgrounder.get_background(["dict1"],[num_frames],["add"])
-
-# place augmented images into background
-
-frames_with_augmentations, bounding_boxes, oriented_bounding_boxs = insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,padding_crop=config.padding_crop)
-
-# save as yolo project
-
-if not config.obbox_format:
-    save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
-else:
-    save_yolo_obbox_format(frames_with_augmentations, oriented_bounding_boxs, output_folder, classes)
-```
 
 ### Augmenter
 The Augmenter class contain target object dict which you can add dict during init class or just add it later.<br> Here's the command to init class and handle the dict.
@@ -182,4 +101,84 @@ Here's all utils function.
 | ------------- | ------------- |
 | createMapping.py | create json file for upload into label studio from yolo project and label studio project for map the changed names that upload into label studio. Using api key and ip from .env |
 | createMapping_obbox.py | create json for upload into label studio from yolo-obb project and label studio project for map the changed names that upload into label studio. Using api key and ip from .env |
+
+### Example Usage
+
+```
+# init augmenter and parameter
+augmenter = Augmenter()
+logo_folder = 'logos'
+output_folder = 'output'
+random_logo = True
+padding_crop = False
+obbox_format = False
+areas = [10000,40000]
+perspec_directions = [(0,0),(0,1),(0,-1),(1,0),(-1,0)]
+perspec_angles = [25]
+rotation_angles = [-30,0,30]
+stretchs = [0.7,1,1.3]
+copy = 1
+classes = ['object1','object2']
+num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(stretchs)*len(classes)*copy
+num_frames = num_images
+i=0
+
+# apply augmentation combination
+augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
+augmenter.add_augmentation('hue_color',brightness_range = (0.8,1.2))
+augmenter.add_augmentation('blur',scale_factor=3)
+for _ in range(len(classes)*copy):
+    for area in areas:
+        for rotation_angle in rotation_angles:
+            for perspec_angle in perspec_angles:
+                for stretch in stretchs:
+                    for (x,y) in perspec_directions:
+                        augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+                        if stretch != 1:
+                            augmenter.add_augmentation('stretch',scale_range=(stretch,stretch) ,image_range=(i,i))
+                        augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
+                        augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
+                        augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
+                        i+=1
+
+#get augmentation images
+augmented_images = []
+oriented_bboxs = []
+class_indices = []
+#loop to add dict of each class into augmenter
+for class_name in classes:
+    path = os.path.join(logo_folder, class_name)
+    images = load_images_from_directory(path)
+    augmenter.add_dict(class_name, images)
+#loop to get augment images and append into augmented_images list
+for idx, class_name in enumerate(classes):
+    num_class_images = num_images // len(classes)
+    augmented_images_, oriented_bboxs_ = augmenter.augment(class_name, num_class_images, random=config.random_logo)
+    augmented_images.extend(augmented_images_)
+    oriented_bboxs.extend(oriented_bboxs_)
+    class_indices.extend([idx] * num_class_images)
+
+# init backgrounder
+backgrounder = Blackgrounder()
+model = YOLO("model/remove_object.pt")
+# add source dict background
+backgrounder.add_dict("dict1","video/video_TNN.mp4","video")
+backgrounder.add_dict("dict1","video/ch3","image")
+backgrounder.add_rgb_bg_dict("dict1",width=704,height=576,rgb=(255,255,255))
+# add background setting
+backgrounder.add_settings("add","remove_object_with_yolo_model",model, confident_level=0.4, target_class_name = None, rgb=(255,255,255), opacity = 1)
+
+# get background
+frames = backgrounder.get_background(["dict1"],[num_frames],["add"])
+
+# place augmented images into background
+frames_with_augmentations, bounding_boxes, oriented_bounding_boxs = insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,padding_crop=config.padding_crop)
+
+# save as yolo project
+if not config.obbox_format:
+    save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes)
+else:
+    save_yolo_obbox_format(frames_with_augmentations, oriented_bounding_boxs, output_folder, classes)
+```
+
 
