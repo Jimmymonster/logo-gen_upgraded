@@ -74,8 +74,8 @@ Here's the list off all settings function with parameters
 | Function  | Description |
 | ------------- | ------------- |
 | add_color_rectangle(position=(0.25,0.25,0.75,0.75), rgb = (255,255,255)) | add colored rectangle in position x1,y1,x2,y2 in percent |
-| hsv_shift(position=(0.25,0.25,0.75,0.75),brightness_shift=0,contrast_shift=0,hue_shift=0,saturation_shift=0,gamma_shift=0) | shift hsv color system in position x1,y1,x2,y2 in percent |
-| rgb_shift(position=(0.25,0.25,0.75,0.75),red_shift=0,green_shift=0,blue_shift=0) | shift rgb color system in position x1,y1,x2,y2 in percent |
+| hsv_shift(position=(0.25,0.25,0.75,0.75), brightness_shift=0, contrast_shift=0, hue_shift=0, saturation_shift=0, gamma_shift=0) | shift hsv color system in position x1,y1,x2,y2 in percent |
+| rgb_shift(position=(0.25,0.25,0.75,0.75), red_shift=0, green_shift=0, blue_shift=0) | shift rgb color system in position x1,y1,x2,y2 in percent |
 | remove_object_with_yolo_model(model, confident_level=0.5, target_class_name:list = None, rgb=(255,255,255), opacity = 1.0) | remove object in background using yolo model. Note that you need to init model before and pass model into this function. |
 | add_object(object_image, num_object, position_range=(0.25, 0.25, 0.75, 0.75), scale_range = (1,1)) | add object image in background using for add some negative object that similar to target object. input is pil image. |
 <br>
