@@ -73,5 +73,28 @@ backgrounder.add_settings("setting1","rgb_shift", position(0,0,0.5,0.5) , blue_s
 Here's the list off all settings function with parameters
 | Function  | Description |
 | ------------- | ------------- |
+| add_color_rectangle(position=(0.25,0.25,0.75,0.75), rgb = (255,255,255)) | add colored rectangle in position x1,y1,x2,y2 in percent |
+| hsv_shift(position=(0.25,0.25,0.75,0.75),brightness_shift=0,contrast_shift=0,hue_shift=0,saturation_shift=0,gamma_shift=0) | shift hsv color system in position x1,y1,x2,y2 in percent |
+| rgb_shift(position=(0.25,0.25,0.75,0.75),red_shift=0,green_shift=0,blue_shift=0) | shift rgb color system in position x1,y1,x2,y2 in percent |
+| remove_object_with_yolo_model(model, confident_level=0.5, target_class_name:list = None, rgb=(255,255,255), opacity = 1.0) | remove object in background using yolo model. Note that you need to init model before and pass model into this function. |
+| add_object(object_image, num_object, position_range=(0.25, 0.25, 0.75, 0.75), scale_range = (1,1)) | add object image in background using for add some negative object that similar to target object. input is pil image. |
 <br>
+
+After add image sources and settings now you can get background using this command.
+
+```
+# backgrounder.get_background(["source1","source2",....],["num_images1","num_images2",...],["setting1","setting2",....])
+frames = backgrounder.get_background(["source1"],[50],["setting1"])
+```
+### Utils Function
+Utils function is a function that make your life easier. <br>
+Here's all utils function.
+
+| Function  | Description |
+| ------------- | ------------- |
+| load_images_from_directory(path) | load image from directory path and return as list of pil images |
+| insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices, padding_crop=False) | insert augmented object into background frame and return frames, bbox, obbox |
+| save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes) | save project in yolo format (class_index, x_mid, y_mid, width, height) |
+| save_yolo_obbox_format(frames_with_augmentations, oriented_bounding_boxs, output_folder, classes) | save project in yolo-obb format (class_index, x1, y1, x2, y2, x3, y3, x4, y4) |
+
 ### Got a work to do. I will finish this docs later!!!
