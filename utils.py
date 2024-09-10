@@ -3,7 +3,6 @@ import cv2
 import os
 import numpy as np
 from PIL import Image, ImageDraw
-from utility_code.gen_bg import gen_rainbow,gen_plain_rgb
 
 def load_env_file(filepath):
     env_vars = {}
@@ -75,20 +74,6 @@ def extract_random_frames(video_path, num_frames):
     video_capture.release()
     return frames
 
-def ranbow_frames(num_frames):
-    frames = []
-    for i in range(num_frames):
-        image=gen_rainbow(width=704,height=576)
-        frames.append(image)
-    return frames
-
-def rgb_frames(num_frames,rgb=(255,255,255)):
-    frames = [] 
-    for i in range(num_frames):
-        image=gen_plain_rgb(width=704,height=576,rgb=rgb)
-        frames.append(image)
-    return frames
-
 def place_augmented_image(frame, augmented_image, oriented_bbox, padding_crop = False):
     """Randomly place an augmented image on a frame and return the bounding box."""
     frame_height, frame_width, _ = frame.shape
@@ -147,7 +132,7 @@ def whiteout_areas(frame, whiteout_bboxes):
     else:
         return frame_pil
 
-def insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices, whiteout_bboxes=[],padding_crop = False):
+def insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices,padding_crop = False):
     """Randomly place multiple augmented images into frames and return the frames with bounding boxes."""
     num_augmented = len(augmented_images)
     num_frames = len(frames)
@@ -165,10 +150,6 @@ def insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indi
     for i, augmented_image in enumerate(augmented_images):
         frame_index = i % num_frames
         frame = frames[frame_index]
-
-        # Whiteout specific areas in the frame
-        if whiteout_bboxes:
-            frame = whiteout_areas(frame, whiteout_bboxes)
         
         # Place the augmented image on the frame
         frame_with_augmentation, bbox, obbox = place_augmented_image(frame, augmented_image, oriented_bboxs[i], padding_crop)
@@ -228,15 +209,15 @@ def save_yolo_format(frames, bounding_boxes, output_folder, class_names):
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            image_filename = os.path.join(images_folder, f"frame_{i:04d}.jpg")
-            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+            image_filename = os.path.join(images_folder, f"frame_gen_{i:04d}.jpg")
+            label_filename = os.path.join(labels_folder, f"frame_gen_{i:04d}.txt")
 
         else:
             if image.mode != 'RGBA':
                 image = image.convert('RGBA')
             
-            image_filename = os.path.join(images_folder, f"frame_{i:04d}.png")
-            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+            image_filename = os.path.join(images_folder, f"frame_gen_{i:04d}.png")
+            label_filename = os.path.join(labels_folder, f"frame_gen_{i:04d}.txt")
         
         # Save the frame as an image
         image.save(image_filename)
@@ -274,15 +255,15 @@ def save_yolo_obbox_format(frames, oriented_bounding_boxs, output_folder, class_
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            image_filename = os.path.join(images_folder, f"frame_{i:04d}.jpg")
-            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+            image_filename = os.path.join(images_folder, f"frame_gen_{i:04d}.jpg")
+            label_filename = os.path.join(labels_folder, f"frame_gen_{i:04d}.txt")
 
         else:
             if image.mode != 'RGBA':
                 image = image.convert('RGBA')
             
-            image_filename = os.path.join(images_folder, f"frame_{i:04d}.png")
-            label_filename = os.path.join(labels_folder, f"frame_{i:04d}.txt")
+            image_filename = os.path.join(images_folder, f"frame_gen_{i:04d}.png")
+            label_filename = os.path.join(labels_folder, f"frame_gen_{i:04d}.txt")
         
         # Save the frame as an image
         image.save(image_filename)
