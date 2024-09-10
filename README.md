@@ -1,8 +1,10 @@
 # About this project
 This project is about doing augmentation and save it to yolo and yolo-obb format for train yolo model. The concept is augment the target object and place it into background. Augmenter class handle the augmentation of target object and Backgrounder class handle the background generation.
 # How to use
+### Example Usage
+=== I will write this later ===
 ### Augmenter
-The Augmenter class contain target object dict which you can add dict during init class or just add it later.<br> Here the command to init class and handle the dict.
+The Augmenter class contain target object dict which you can add dict during init class or just add it later.<br> Here's the command to init class and handle the dict.
 ```
 # init augmenter
 augmenter = Augmenter()
@@ -52,4 +54,24 @@ After you add augmentation to target image now you can get augment image by usin
 augmented_images, oriented_bboxs = augmenter.augment("target_object_name", 50, random=True)
 ```
 
+### Backgrounder
+The backgrounder class contain dict of image sources and dict of settings to apply in background. <br>
+The images source has 3 types images, video and rgb. <br>
+Here's the command to init backgrouder and add dict of image sources and settings.
+
+```
+backgrouder = Backgrounder()
+
+# backgrounder.add_dict('dict_name','path','type')
+
+backgrounder.add_dict("source1","path_to_images_directory","image")
+backgrounder.add_dict("source1","path_to_video.mp4","video" , max_frames=5)
+backgrounder.add_rgb_bg_dict("source1",width=400,height=400,rgb=(255,255,255), max_frames=10)
+backgrounder.add_settings("setting1","rgb_shift", position(0,0,0.5,0.5) , red_shift = 255)
+backgrounder.add_settings("setting1","rgb_shift", position(0,0,0.5,0.5) , blue_shift = 255, image_range=(0,5))
+```
+Here's the list off all settings function with parameters
+| Function  | Description |
+| ------------- | ------------- |
+<br>
 ### Got a work to do. I will finish this docs later!!!
