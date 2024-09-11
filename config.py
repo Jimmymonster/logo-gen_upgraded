@@ -45,12 +45,12 @@ rotation_angles = [-30,0,30]
 stretchs = [0.7,1,1.3]
 copy = 1
 
-classes = ['sevenEleven1']
+classes = ['amazon','sevenEleven1','ptt']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(stretchs)*len(classes)*copy
 num_frames = num_images
 i=0
 augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
-augmenter.add_augmentation('hue_color',brightness_range = (0.5,1.5), contrast_range = (0.5,1.5), hue_range = (-0.1,0.1), saturation_range=(0.95,1.05))
+augmenter.add_augmentation('hue_color',brightness_range = (0.5,1.5), contrast_range = (0.5,1.5), hue_range = (-0.05,0.05), saturation_range=(0.95,1.05))
 augmenter.add_augmentation('blur',scale_factor=3)
 for _ in range(len(classes)*copy):
     for area in areas:
@@ -63,20 +63,21 @@ for _ in range(len(classes)*copy):
                             augmenter.add_augmentation('stretch',scale_range=(stretch,stretch) ,image_range=(i,i))
                         augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
                         augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                        augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
+                        # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
                         i+=1
 
 
-num_images+=30
-num_frames=num_images
+
 areas = [50+i*25 for i in range(0,10)]
 rotation_angles = [-45,0,45]
+num_images+=len(areas)*len(rotation_angles)*len(classes)
+num_frames=num_images
 for area in areas:
     for rotation_angle in rotation_angles:
         augmenter.add_augmentation('set_resolution',max_resolution=(area,area),image_range=(i,i))
         augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
         augmenter.add_augmentation('set_perspective',angle=0,direction=(0,0),image_range=(i,i))
-        augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
+        # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
         i+=1
 # ========================================= val config ================================================
 
@@ -85,40 +86,66 @@ for area in areas:
 # random_logo = True
 # padding_crop = False
 # obbox_format = False
-# # whiteout_bboxes = [(620,90,668,175)] TNN
-# whiteout_bboxes = []
-
-# # rectangle areas
-# # areas = [3500,7500,15000,35000,60000]
-# # areas = [3500,15000,35000]
-
 # # square areas
-# areas = [8000,15000,30000,50000,80000]
-# rotations = [-60,-45,-15,15,45,60]
+# areas = [10000,40000]
+# rotations = [-30,0,30]
 
-# copy = 1
+# copy = 7
 
-# classes = ['aia1']
-# num_images = 25*2
+# classes = ['sevenEleven1']
+# num_images = 50 * len(classes)
 # num_frames = num_images
 # i=0
 
-# augmenter.add_augmentation('blur',scale_factor=2)
-# augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
+# augmenter.add_augmentation('blur',scale_factor=3)
+# # augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
 # # augmenter.add_augmentation('hue_color',brightness_range = (0.8,1.2))
 # augmenter.add_augmentation('hue_color',brightness_range = (0.7,1.3), contrast_range = (0.7,1.3))
-# for area in areas:
-#     for rotation in rotations:
-#         augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
-#         augmenter.add_augmentation('rotation',angle_range=(rotation,rotation),image_range=(i,i))
-#         i+=1
+# for _ in range(copy):
+#     for area in areas:
+#         for rotation in rotations:
+#             augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+#             augmenter.add_augmentation('rotation',angle_range=(rotation,rotation),image_range=(i,i))
+#             augmenter.add_augmentation('set_perspective',angle=0,direction=(0,0),image_range=(i,i))
+#             i+=1
 
-# ress = [50+i*25 for i in range(0,20)]
+# ress = [100+i*50 for i in range(0,8)]
 # for res in ress:
 #     augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
 #     # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
 #     i+=1
 
+# ======================================= Small Config =================================================
+
+# logo_folder = 'logos'
+# output_folder = 'output'
+# random_logo = True
+# padding_crop = False
+# obbox_format = False
+# # square areas
+# areas = [10000,40000]
+# rotations = [-30,0,30]
+
+# copy = 1
+
+# classes = ['ptt']
+# num_images = 10
+# num_frames = num_images
+# i=0
+
+# for _ in range(copy):
+#     for area in areas:
+#         for rotation in rotations:
+#             augmenter.add_augmentation('set_area',max_area=area,image_range=(i,i))
+#             augmenter.add_augmentation('rotation',angle_range=(rotation,rotation),image_range=(i,i))
+#             augmenter.add_augmentation('set_perspective',angle=0,direction=(0,0),image_range=(i,i))
+#             i+=1
+
+# ress = [100+i*50 for i in range(0,4)]
+# for res in ress:
+#     augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
+#     # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
+#     i+=1
 
 # ===================================== Cylinder Config ================================================
 # video_path = 'video/ch3'
