@@ -92,13 +92,16 @@ Here's all utils function.
 | Function  | Description |
 | ------------- | ------------- |
 | load_images_from_directory(path) | load image from directory path and return as list of pil images |
-| insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices, padding_crop=False) | insert augmented object into background frame and return frames, bbox, obbox |
+| insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indices, padding_crop=False) | insert augmented object into background frame and return frames, bbox, obbox. (class indices is the list of index that represent first image index of each class in image list)|
 | save_yolo_format(frames_with_augmentations, bounding_boxes, output_folder, classes) | save project in yolo format (class_index, x_mid, y_mid, width, height) |
 | save_yolo_obbox_format(frames_with_augmentations, oriented_bounding_boxs, output_folder, classes) | save project in yolo-obb format (class_index, x1, y1, x2, y2, x3, y3, x4, y4) |
 
 ### Others
 | Python Code  | Description |
 | ------------- | ------------- |
+| config.py | a config for run logo_gen.py logo_gen_multiple_project.py |
+| logo_gen.py | load variables from config.py and do the augmentation |
+| logo_gen_multiple_project.py | load variables from config.py and do the augmentation and save as seperate project in each class |
 | createMapping.py | create json file for upload into label studio from yolo project and label studio project for map the changed names that upload into label studio. Using api key and ip from .env |
 | createMapping_obbox.py | create json for upload into label studio from yolo-obb project and label studio project for map the changed names that upload into label studio. Using api key and ip from .env |
 
