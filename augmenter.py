@@ -20,6 +20,9 @@ class Augmenter:
             del self.image_dict[category]
         else:
             raise ValueError(f"Category '{category}' does not exist.")
+        
+    def clear_dict(self):
+        self.image_dict = {}
 
     def update_dict(self, category, images):
         """Update the images in an existing category."""

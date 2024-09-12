@@ -45,13 +45,13 @@ rotation_angles = [-30,0,30]
 stretchs = [0.7,1,1.3]
 copy = 1
 
-classes = ['amazon','sevenEleven1','ptt']
+classes = ['ktb']
 num_images = len(perspec_directions)*len(areas)*len(perspec_angles)*len(rotation_angles)*len(stretchs)*len(classes)*copy
 num_frames = num_images
 i=0
-augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=75)
+augmenter.add_augmentation('noise',min_noise_level=0,max_noise_level=25)
 augmenter.add_augmentation('hue_color',brightness_range = (0.5,1.5), contrast_range = (0.5,1.5), hue_range = (-0.05,0.05), saturation_range=(0.95,1.05))
-augmenter.add_augmentation('blur',scale_factor=3)
+augmenter.add_augmentation('blur',scale_factor=2)
 for _ in range(len(classes)*copy):
     for area in areas:
         for rotation_angle in rotation_angles:
@@ -63,7 +63,7 @@ for _ in range(len(classes)*copy):
                             augmenter.add_augmentation('stretch',scale_range=(stretch,stretch) ,image_range=(i,i))
                         augmenter.add_augmentation('rotation',angle_range=(rotation_angle,rotation_angle),image_range=(i,i))
                         augmenter.add_augmentation('set_perspective',angle=perspec_angle,direction=(x,y),image_range=(i,i))
-                        # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
+                        augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.5,image_range=(i,i))
                         i+=1
 
 
