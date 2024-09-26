@@ -74,7 +74,7 @@ def extract_random_frames(video_path, num_frames):
     video_capture.release()
     return frames
 
-def place_augmented_image(frame, augmented_image, oriented_bbox, padding_crop = False):
+def place_augmented_image(frame, augmented_image, oriented_bboxs, padding_crop = False):
     """Randomly place an augmented image on a frame and return the bounding box."""
     frame_height, frame_width, _ = frame.shape
     aug_width, aug_height = augmented_image.size
@@ -113,8 +113,11 @@ def place_augmented_image(frame, augmented_image, oriented_bbox, padding_crop = 
         y_center = (y + aug_height / 2) / frame_height
         width = aug_width / frame_width
         height = aug_height / frame_height
-    updated_obbox = [((a + x) / frame_width, (b + y) / frame_height) for (a, b) in oriented_bbox]
-    return frame, (x_center, y_center, width, height) , updated_obbox
+    updated_obboxs = []
+    for oriented_bbox in oriented_bboxs:
+        updated_obbox = [((a + x) / frame_width, (b + y) / frame_height) for (a, b) in oriented_bbox]
+        updated_obboxs.append(updated_obbox)
+    return frame, (x_center, y_center, width, height) , updated_obboxs
 
 def whiteout_areas(frame, whiteout_bboxes):
     """Whiteout specific areas of the frame given bounding boxes."""
@@ -152,12 +155,12 @@ def insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indi
         frame = frames[frame_index]
         
         # Place the augmented image on the frame
-        frame_with_augmentation, bbox, obbox = place_augmented_image(frame, augmented_image, oriented_bboxs[i], padding_crop)
+        frame_with_augmentation, bbox, obboxs = place_augmented_image(frame, augmented_image, oriented_bboxs[i], padding_crop)
         frames[frame_index] = frame_with_augmentation
         
         # Append bounding box information
         bounding_boxes.append((frame_index, class_indices[i % len(class_indices)], bbox))
-        oriented_bounding_boxs.append((frame_index, class_indices[i % len(class_indices)], obbox))
+        oriented_bounding_boxs.append((frame_index, class_indices[i % len(class_indices)], obboxs))
 
     # Reorganize bounding boxes by frame
     frames_with_augmentations = [frames[i] for i in range(num_frames)]
@@ -175,8 +178,9 @@ def insert_augmented_images(frames, augmented_images, oriented_bboxs, class_indi
 
     # Reorganize bounding boxes by frame index
     frame_bounding_boxes = {i: [] for i in range(num_frames)}
-    for frame_index, class_id, bbox in oriented_bounding_boxs:
-        frame_bounding_boxes[frame_index].append((class_id, bbox))
+    for frame_index, class_id, bboxs in oriented_bounding_boxs:
+        for bbox in bboxs:
+            frame_bounding_boxes[frame_index].append((class_id, bbox))
     # Flatten bounding boxes for each frame
     oriented_bounding_boxs = [frame_bounding_boxes[i] for i in range(num_frames)]
 
