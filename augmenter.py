@@ -259,7 +259,10 @@ class Augmenter:
         width, height = image.size
         image = np.array(image)
          # Convert to grayscale and find non-zero points
-        gray_warped = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if len(image.shape) == 3:  # Check if the image has 3 channels (BGR)
+            gray_warped = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_warped = image 
         non_zero_points = cv2.findNonZero(gray_warped)
         if non_zero_points is None:
             return img  # No valid transformation, return original image
@@ -424,7 +427,10 @@ class Augmenter:
         image_np = np.array(image)
         warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
         # Convert to grayscale and find non-zero points
-        gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+        if len(warped_image.shape) == 3:  # Check if the image has 3 channels (BGR)
+            gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_warped = warped_image 
         non_zero_points = cv2.findNonZero(gray_warped)
         if non_zero_points is None:
             return image  # No valid transformation, return original image
@@ -515,7 +521,10 @@ class Augmenter:
         image_np = np.array(image)
         warped_image = cv2.warpPerspective(image_np, matrix, (width, height))
         # Convert to grayscale and find non-zero points
-        gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+        if len(warped_image.shape) == 3:  # Check if the image has 3 channels (BGR)
+            gray_warped = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_warped = warped_image 
         non_zero_points = cv2.findNonZero(gray_warped)
         if non_zero_points is None:
             return image  # No valid transformation, return original image

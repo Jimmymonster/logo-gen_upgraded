@@ -13,7 +13,11 @@ def read_yolo_project_with_class_map(image_folder, label_folder):
     class_index_list = []   # List mapping each bounding box to its class index for each image
 
     # Iterate through all image files
+    # i=0
     for image_file in os.listdir(image_folder):
+        # i+=1
+        # if i==51:
+        #     break
         if image_file.endswith(('.jpg', '.png', '.jpeg')):
             image_path = os.path.join(image_folder, image_file)
             label_path = os.path.join(label_folder, image_file.rsplit('.', 1)[0] + '.txt')
@@ -62,7 +66,8 @@ def read_yolo_project_with_class_map(image_folder, label_folder):
             
             # Append labels and class indices for this image
             label_list.append(image_labels if image_labels else [[(0, 0), (0, 0), (0, 0), (0, 0)]])
-            class_index_list.append(class_indices if class_indices else [[-1]])
+            class_index_list.append(class_indices if class_indices else [-1])
+
 
     return image_list, label_list, class_index_list
 
@@ -81,7 +86,12 @@ def save_yolo_augmented_data(augmented_images, obboxs, class_index_list, output_
         
         # Save the augmented image
         image_path = os.path.join(output_image_folder, image_filename)
-        aug_image.save(image_path)
+        # Check if the image is in CMYK mode
+        if aug_image.mode == 'CMYK':
+            # Convert the image to RGB (PNG doesn't support CMYK directly)
+            aug_image = aug_image.convert('RGB')
+        # Save the image in PNG format
+        aug_image.save(image_path, format='PNG')
 
         # Prepare the label content in YOLO format
         img_w, img_h = aug_image.size
@@ -102,39 +112,54 @@ def save_yolo_augmented_data(augmented_images, obboxs, class_index_list, output_
                 y_center = (miny + maxy) / 2.0 / img_h
                 width = (maxx - minx) / img_w
                 height = (maxy - miny) / img_h
-
+                if(class_id != -1):
                 # Write the label in YOLO format: class_id x_center y_center width height
-                f.write(f"{int(class_id)} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
+                    f.write(f"{int(class_id)} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
 
-yolo_project_folder = 'output'
-image_folder = os.path.join(yolo_project_folder,'images')
-label_folder = os.path.join(yolo_project_folder,'labels')
-classes_file = os.path.join(yolo_project_folder,'classes.txt')
-output_folder = 'output_test'
-output_image_folder = os.path.join(output_folder,'images')
-output_label_folder = os.path.join(output_folder,'labels')
-output_class_file = os.path.join(output_folder,'classes.txt')
+def augment_folder(input_yolo_dir, output_yolo_dir):
+    yolo_project_folder = input_yolo_dir
+    image_folder = os.path.join(yolo_project_folder,'images')
+    label_folder = os.path.join(yolo_project_folder,'labels')
+    classes_file = os.path.join(yolo_project_folder,'classes.txt')
+    output_folder = output_yolo_dir
+    output_image_folder = os.path.join(output_folder,'images')
+    output_label_folder = os.path.join(output_folder,'labels')
+    output_class_file = os.path.join(output_folder,'classes.txt')
 
-num_images = 21
 
-#clear output path
-if os.path.exists(output_folder):
-    shutil.rmtree(output_folder)
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
 
-augmenter = Augmenter()
-augmenter.add_augmentation('rotation',angle_range=(0,90))
-image_list,label_list,class_list = read_yolo_project_with_class_map(image_folder,label_folder)
+    #clear output path
+    if os.path.exists(output_folder):
+        shutil.rmtree(output_folder)
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
-dict_name="name"
-augmenter.add_dict(dict_name,image_list)
-augmenter.add_obbox_dict(dict_name,label_list)
-augmenter.set_obbox_class_index(dict_name,class_list)
+    augmenter = Augmenter()
+    num_images = len(os.listdir(label_folder))*5
+    one_chunk = num_images//5
+    augmenter.add_augmentation('rotation',angle_range=(-15,-15),image_range=(0,one_chunk-1))
+    augmenter.add_augmentation('rotation',angle_range=(0,0),image_range=(one_chunk,2*one_chunk-1))
+    augmenter.add_augmentation('rotation',angle_range=(15,15),image_range=(2*one_chunk,3*one_chunk-1))
+    augmenter.add_augmentation('set_perspective',angle=25,direction=(0,1),image_range=(3*one_chunk,4*one_chunk-1))
+    augmenter.add_augmentation('set_perspective',angle=25,direction=(0,-1),image_range=(4*one_chunk,5*one_chunk-1))
+    image_list,label_list,class_list = read_yolo_project_with_class_map(image_folder,label_folder)
 
-augmented_image, class_index_list = augmenter.augment(dict_name,num_images,random=True)
-augmented_image,obboxs= augmented_image
-save_yolo_augmented_data(augmented_image, obboxs, class_index_list, output_image_folder, output_label_folder, classes_file, output_class_file, "augment_image")
+    dict_name="name"
+    augmenter.add_dict(dict_name,image_list)
+    augmenter.add_obbox_dict(dict_name,label_list)
+    augmenter.set_obbox_class_index(dict_name,class_list)
+
+    augmented_image, class_index_list = augmenter.augment(dict_name,num_images,random=True)
+    augmented_image,obboxs= augmented_image
+    save_yolo_augmented_data(augmented_image, obboxs, class_index_list, output_image_folder, output_label_folder, classes_file, output_class_file, "augment_image")
+
+
+# dir_list= os.listdir("C:/Users/thanapob/My File/11classdata/11base")
+# for item in dir_list:
+#     augment_folder("C:/Users/thanapob/My File/11classdata/11base/"+item,"C:/Users/thanapob/My File/11classdata/11augmented_2/"+item)
+
+item = "bot"
+augment_folder("C:/Users/thanapob/My File/11classdata/11base/"+item,"C:/Users/thanapob/My File/11classdata/11augmented_2/"+item)
 
 end_time = time.time()
 elapsed_time = end_time - start_time
