@@ -91,7 +91,7 @@ def save_yolo_augmented_data(augmented_images, obboxs, class_index_list, output_
             # Convert the image to RGB (PNG doesn't support CMYK directly)
             aug_image = aug_image.convert('RGBA')
         # Save the image in PNG format
-        aug_image.save(image_path)
+        aug_image.save(image_path, 'PNG', icc_profile=None)
 
         # Prepare the label content in YOLO format
         img_w, img_h = aug_image.size
@@ -172,8 +172,8 @@ base_dir = "C:/Users/thanapob/My File/yolo-dataset/11base"
 
 item = "shell"
 augment_folder(os.path.join(base_dir,item),f"C:/Users/thanapob/My File/yolo-dataset/11augmented_2/{item}")
-item = "bcp"
-augment_folder(os.path.join(base_dir,item),f"C:/Users/thanapob/My File/yolo-dataset/11augmented_2/{item}")
+# item = "bcp"
+# augment_folder(os.path.join(base_dir,item),f"C:/Users/thanapob/My File/yolo-dataset/11augmented_2/{item}")
 # augment_folder(os.path.join(base_dir,item),base_dir[:-1]+"_augmented/"+item)
 
 end_time = time.time()
