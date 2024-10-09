@@ -37,10 +37,10 @@ for idx, class_name in enumerate(classes):
 # need to load model first if want to use it
 # model = YOLO("model/model.pt")
 dict_name = "dict1"
-# video_list = ["video_TNN.mp4","video_TNN2.mp4","video_ch3.mp4"]
-# image_list = ["ch3","ch5","ch7","ch8","pptv","workpoint","bg_internet"]
-video_list = []
-image_list = ["bg_internet"]
+video_list = ["video_TNN.mp4","video_TNN2.mp4","video_ch3.mp4"]
+image_list = ["ch3","ch5","ch7","ch8","pptv","workpoint","bg_internet"]
+# video_list = []
+# image_list = ["bg_internet"]
 backgrounder = Blackgrounder()
 
 for video in video_list:

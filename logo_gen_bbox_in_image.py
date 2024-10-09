@@ -24,6 +24,7 @@ def read_yolo_project_with_class_map(image_folder, label_folder):
             
             # Load the image
             image = Image.open(image_path)
+            image= image.convert('RGB')
             image_list.append(image)
 
             # Initialize label storage for this image
@@ -76,7 +77,6 @@ def save_yolo_augmented_data(augmented_images, obboxs, class_index_list, output_
         os.makedirs(output_image_folder)
     if not os.path.exists(output_label_folder):
         os.makedirs(output_label_folder)
-    shutil.copyfile(classes_file,output_class_file)
 
     # Iterate through augmented images and their corresponding bounding boxes and class indices
     for i, (aug_image, bboxes, class_indices) in enumerate(zip(augmented_images, obboxs, class_index_list)):
@@ -89,9 +89,9 @@ def save_yolo_augmented_data(augmented_images, obboxs, class_index_list, output_
         # Check if the image is in CMYK mode
         if aug_image.mode == 'CMYK':
             # Convert the image to RGB (PNG doesn't support CMYK directly)
-            aug_image = aug_image.convert('RGB')
+            aug_image = aug_image.convert('RGBA')
         # Save the image in PNG format
-        aug_image.save(image_path, format='PNG')
+        aug_image.save(image_path)
 
         # Prepare the label content in YOLO format
         img_w, img_h = aug_image.size
@@ -126,15 +126,23 @@ def augment_folder(input_yolo_dir, output_yolo_dir):
     output_label_folder = os.path.join(output_folder,'labels')
     output_class_file = os.path.join(output_folder,'classes.txt')
 
-
-
     #clear output path
     if os.path.exists(output_folder):
         shutil.rmtree(output_folder)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    filelist = os.listdir(yolo_project_folder)
+    for filename in filelist:
+        file_path = os.path.join(yolo_project_folder, filename)
+        if os.path.isfile(file_path):
+            shutil.copy(file_path, output_folder)
+
     augmenter = Augmenter()
+    # num_images = len(os.listdir(label_folder))
+    # augmenter.add_augmentation('set_perspective',angle=25,direction=(0,-1))
     num_images = len(os.listdir(label_folder))*5
     one_chunk = num_images//5
     augmenter.add_augmentation('rotation',angle_range=(-15,-15),image_range=(0,one_chunk-1))
@@ -154,12 +162,19 @@ def augment_folder(input_yolo_dir, output_yolo_dir):
     save_yolo_augmented_data(augmented_image, obboxs, class_index_list, output_image_folder, output_label_folder, classes_file, output_class_file, "augment_image")
 
 
-# dir_list= os.listdir("C:/Users/thanapob/My File/11classdata/11base")
+base_dir = "C:/Users/thanapob/My File/yolo-dataset/11base"
+# dir_list= os.listdir(base_dir)
 # for item in dir_list:
-#     augment_folder("C:/Users/thanapob/My File/11classdata/11base/"+item,"C:/Users/thanapob/My File/11classdata/11augmented_2/"+item)
+#     if os.path.isdir(base_dir):
+#         augment_folder(base_dir+item,base_dir[:-1]+"_augmented/"+item)
+#     else:
+#         shutil.copy(base_dir+item,base_dir[:-1]+"_augmented/"+item)
 
-item = "bot"
-augment_folder("C:/Users/thanapob/My File/11classdata/11base/"+item,"C:/Users/thanapob/My File/11classdata/11augmented_2/"+item)
+item = "shell"
+augment_folder(os.path.join(base_dir,item),f"C:/Users/thanapob/My File/yolo-dataset/11augmented_2/{item}")
+item = "bcp"
+augment_folder(os.path.join(base_dir,item),f"C:/Users/thanapob/My File/yolo-dataset/11augmented_2/{item}")
+# augment_folder(os.path.join(base_dir,item),base_dir[:-1]+"_augmented/"+item)
 
 end_time = time.time()
 elapsed_time = end_time - start_time

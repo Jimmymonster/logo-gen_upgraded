@@ -115,6 +115,7 @@ num_frames = num_images
 ress = [70+i*30 for i in range(0,10)]
 for res in ress:
     augmenter.add_augmentation('set_resolution',max_resolution=(res,res),image_range=(i,i))
+    augmenter.add_augmentation('set_perspective',angle=30,direction=(0,1),image_range=(i,i))
     # augmenter.add_augmentation('adjust_background_opacity',rgb_color=(random.randint(0,255),random.randint(0,255),random.randint(0,255)) , background_opacity=0.3,image_range=(i,i))
     i+=1
 
